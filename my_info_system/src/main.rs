@@ -2,11 +2,13 @@ mod db;
 
 use db::Database;  // 只需要引入 Database
 use std::io::{self, Write};
+use std::env;
 
 fn main() {
+    env::set_var("LANG", "en_US.UTF-8");
     // 连接数据库（如果数据库文件不存在会创建）
     let db = Database::new("users.db").expect("数据库连接失败");
-    
+
     // 创建用户表（如果没有的话）
     db.create_table().expect("创建表格失败");
 
