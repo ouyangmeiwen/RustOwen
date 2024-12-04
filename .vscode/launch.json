@@ -5,7 +5,7 @@
             "name": "Debug Rust Program",
             "type": "lldb",
             "request": "launch",
-            "program": "${workspaceFolder}/target/debug/my_info_system",  // 你的可执行文件
+            "program": "${workspaceFolder}/target/debug/my_info_system",  // 请确保替换为正确的可执行文件名
             "args": [],
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "cargo build",

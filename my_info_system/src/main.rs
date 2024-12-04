@@ -1,6 +1,6 @@
 mod db;
 
-use db::{Database, User};
+use db::Database;  // 只需要引入 Database
 use std::io::{self, Write};
 
 fn main() {
