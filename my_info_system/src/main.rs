@@ -1,27 +1,27 @@
 mod db;
 
-use db::Database;  // 只需要引入 Database
+use db::Database;  // Only need to import Database
 use std::io::{self, Write};
 use std::env;
 
 fn main() {
     env::set_var("LANG", "en_US.UTF-8");
-    // 连接数据库（如果数据库文件不存在会创建）
-    let db = Database::new("users.db").expect("数据库连接失败");
+    // Connect to the database (it will create the file if not exists)
+    let db = Database::new("users.db").expect("Failed to connect to the database");
 
-    // 创建用户表（如果没有的话）
-    db.create_table().expect("创建表格失败");
+    // Create user table if not exists
+    db.create_table().expect("Failed to create the table");
 
     loop {
-        println!("\n选择操作:");
-        println!("1. 添加用户");
-        println!("2. 查看所有用户");
-        println!("3. 更新用户");
-        println!("4. 删除用户");
-        println!("5. 退出");
+        println!("\nChoose an operation:");
+        println!("1. Add user");
+        println!("2. View all users");
+        println!("3. Update user");
+        println!("4. Delete user");
+        println!("5. Exit");
 
         let mut choice = String::new();
-        print!("请输入选择 (1-5): ");
+        print!("Enter your choice (1-5): ");
         io::stdout().flush().unwrap();
         io::stdin().read_line(&mut choice).unwrap();
 
@@ -31,24 +31,24 @@ fn main() {
             "3" => update_user(&db),
             "4" => delete_user(&db),
             "5" => {
-                println!("退出程序...");
+                println!("Exiting the program...");
                 break;
             }
-            _ => println!("无效选择，请重新输入。"),
+            _ => println!("Invalid choice, please try again."),
         }
     }
 }
 
-// 添加用户
+// Add user
 fn add_user(db: &Database) {
     let mut name = String::new();
     let mut email = String::new();
 
-    print!("请输入用户姓名: ");
+    print!("Enter user name: ");
     io::stdout().flush().unwrap();
     io::stdin().read_line(&mut name).unwrap();
 
-    print!("请输入用户邮箱: ");
+    print!("Enter user email: ");
     io::stdout().flush().unwrap();
     io::stdin().read_line(&mut email).unwrap();
 
@@ -56,42 +56,42 @@ fn add_user(db: &Database) {
     let email = email.trim();
 
     match db.insert_user(name, email) {
-        Ok(id) => println!("用户添加成功，ID: {}", id),
-        Err(e) => eprintln!("添加用户失败: {}", e),
+        Ok(id) => println!("User added successfully, ID: {}", id),
+        Err(e) => eprintln!("Failed to add user: {}", e),
     }
 }
 
-// 查看所有用户
+// View all users
 fn view_users(db: &Database) {
     match db.get_all_users() {
         Ok(users) => {
             if users.is_empty() {
-                println!("没有用户。");
+                println!("No users found.");
             } else {
                 for user in users {
                     println!("{:?}", user);
                 }
             }
         }
-        Err(e) => eprintln!("查询用户失败: {}", e),
+        Err(e) => eprintln!("Failed to query users: {}", e),
     }
 }
 
-// 更新用户
+// Update user
 fn update_user(db: &Database) {
     let mut id = String::new();
     let mut name = String::new();
     let mut email = String::new();
 
-    print!("请输入要更新的用户ID: ");
+    print!("Enter user ID to update: ");
     io::stdout().flush().unwrap();
     io::stdin().read_line(&mut id).unwrap();
 
-    print!("请输入新的用户姓名: ");
+    print!("Enter new user name: ");
     io::stdout().flush().unwrap();
     io::stdin().read_line(&mut name).unwrap();
 
-    print!("请输入新的用户邮箱: ");
+    print!("Enter new user email: ");
     io::stdout().flush().unwrap();
     io::stdin().read_line(&mut email).unwrap();
 
@@ -102,20 +102,20 @@ fn update_user(db: &Database) {
     match db.update_user(id, name, email) {
         Ok(rows_updated) => {
             if rows_updated > 0 {
-                println!("用户信息更新成功！");
+                println!("User information updated successfully!");
             } else {
-                println!("用户ID未找到！");
+                println!("User ID not found!");
             }
         }
-        Err(e) => eprintln!("更新失败: {}", e),
+        Err(e) => eprintln!("Update failed: {}", e),
     }
 }
 
-// 删除用户
+// Delete user
 fn delete_user(db: &Database) {
     let mut id = String::new();
 
-    print!("请输入要删除的用户ID: ");
+    print!("Enter user ID to delete: ");
     io::stdout().flush().unwrap();
     io::stdin().read_line(&mut id).unwrap();
 
@@ -124,11 +124,11 @@ fn delete_user(db: &Database) {
     match db.delete_user(id) {
         Ok(rows_deleted) => {
             if rows_deleted > 0 {
-                println!("用户删除成功！");
+                println!("User deleted successfully!");
             } else {
-                println!("用户ID未找到！");
+                println!("User ID not found!");
             }
         }
-        Err(e) => eprintln!("删除失败: {}", e),
+        Err(e) => eprintln!("Delete failed: {}", e),
     }
 }
