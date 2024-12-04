@@ -1,1 +1,3 @@
-cargo rustc -- -L ./libs -l sqlite3
+build
+cargo rustc -- -L ./libs -l sqlite3      
+
