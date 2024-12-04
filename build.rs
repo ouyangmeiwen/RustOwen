@@ -1,7 +1,9 @@
 fn main() {
-    // 设置 sqlite3.dll 所在的目录
-    println!("cargo:rustc-link-search=native=D:/install/sqlite3");
-
-    // 指定链接动态库 sqlite3
+    // 打印环境变量，查看路径设置
+    println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rustc-link-search=native=./libs");
     println!("cargo:rustc-link-lib=dylib=sqlite3");
+
+    // 输出一些调试信息
+    println!("cargo:warning=Debug:正在链接 sqlite3 库...");
 }
