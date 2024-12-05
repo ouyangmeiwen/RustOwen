@@ -4,3 +4,4 @@
 cd my_info_system
 cargo rustc -- -L ./libs -l sqlite3      
 
+2
