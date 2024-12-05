@@ -6,7 +6,7 @@ use serde_json::json;
 //http://127.0.0.1:7788/api/healthchecker
 #[get("/healthchecker")]
 async fn health_checker_handler() -> impl Responder {
-    const MESSAGE: &str = "Build Simple CRUD API with Rust, SQLX, Postgres,and Actix Web";
+    const MESSAGE: &str = "Build Simple CRUD API 我是谁 with Rust, SQLX, Postgres,and Actix Web";
 
     HttpResponse::Ok().json(json!({"status": "success","message": MESSAGE}))
 }

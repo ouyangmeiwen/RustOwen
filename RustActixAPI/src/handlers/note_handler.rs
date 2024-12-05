@@ -35,7 +35,7 @@ pub async fn note_list_handler(
 
     let notes = query_result.unwrap();
 
-    let json_response = serde_json::json!({
+    let json_response: serde_json::Value = serde_json::json!({
         "status": "success",
         "results": notes.len(),
         "notes": notes
