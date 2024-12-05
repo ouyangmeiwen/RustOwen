@@ -7,7 +7,7 @@ use actix_web::{delete, get, patch, post, web, HttpResponse, Responder};
 use chrono::prelude::*;
 use serde_json::json;
 use uuid::Uuid;
-
+//http://127.0.0.1:7788/api/notes
 #[get("/notes")]
 pub async fn note_list_handler(
     opts: web::Query<FilterOptions>,
@@ -38,7 +38,6 @@ pub async fn note_list_handler(
         "notes": notes
     }))
 }
-
 #[post("/notes/")]
 async fn create_note_handler(
     body: web::Json<CreateNoteSchema>,
@@ -97,6 +96,7 @@ async fn create_note_handler(
     }
 }
 
+//http://127.0.0.1:7788/api/notes/1
 #[get("/notes/{id}")]
 async fn get_note_handler(
     path: web::Path<String>, // `id` 作为 String 处理
@@ -123,6 +123,7 @@ async fn get_note_handler(
     }
 }
 
+//http://127.0.0.1:7788/api/notes/1
 #[patch("/notes/{id}")]
 async fn edit_note_handler(
     path: web::Path<String>,
@@ -200,7 +201,6 @@ async fn edit_note_handler(
         })),
     }
 }
-
 #[delete("/notes/{id}")]
 async fn delete_note_handler(path: web::Path<String>, data: web::Data<AppState>) -> impl Responder {
     let note_id = path.into_inner(); // 直接使用 String 类型的 `id`
