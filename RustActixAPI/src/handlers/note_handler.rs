@@ -142,7 +142,7 @@ async fn edit_note_handler(
 
     match query_result {
         Ok(note) => {
-            let note_response = serde_json::json!({"status": "success","data": serde_json::json!({
+            let note_response: serde_json::Value = serde_json::json!({"status": "success","data": serde_json::json!({
                 "note": note
             })});
 
@@ -161,7 +161,7 @@ async fn delete_note_handler(
     path: web::Path<uuid::Uuid>,
     data: web::Data<AppState>,
 ) -> impl Responder {
-    let note_id = path.into_inner();
+    let note_id: uuid::Uuid = path.into_inner();
     let rows_affected = sqlx::query!("DELETE FROM notes  WHERE id = $1", note_id)
         .execute(&data.db)
         .await
