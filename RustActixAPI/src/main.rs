@@ -61,6 +61,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(Logger::default())
     })
     .bind(("127.0.0.1", port))?
+    .shutdown_timeout(30)  // 设置优雅关闭的超时，单位是秒
     .run()
     .await
 }
