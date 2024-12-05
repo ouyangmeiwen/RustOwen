@@ -7,6 +7,7 @@ use actix_web::{delete, get, patch, post, web, HttpResponse, Responder};
 use chrono::prelude::*;
 use serde_json::json;
 
+//http://127.0.0.1:7788/api/healthchecker
 #[get("/healthchecker")]
 async fn health_checker_handler() -> impl Responder {
     const MESSAGE: &str = "Build Simple CRUD API with Rust, SQLX, Postgres,and Actix Web";

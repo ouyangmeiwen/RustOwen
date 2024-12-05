@@ -21,6 +21,11 @@ async fn main() -> std::io::Result<()> {
     env_logger::init();
 
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let port: u16 = std::env::var("PORT")
+    .expect("PORT environment variable must be set")
+    .parse()
+    .expect("PORT must be a valid i32");
+
     let pool = match PgPoolOptions::new()
         .max_connections(10)
         .connect(&database_url)
@@ -54,7 +59,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(cors)
             .wrap(Logger::default())
     })
-    .bind(("127.0.0.1", 8000))?
+    .bind(("127.0.0.1", port))?
     .run()
     .await
 }
