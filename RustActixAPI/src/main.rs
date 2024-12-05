@@ -1,12 +1,13 @@
-mod handler;
-mod model;
-mod schema;
+pub mod models;
+pub mod schemas;
+pub mod handlers;
 
 use actix_cors::Cors;
 use actix_web::middleware::Logger;
 use actix_web::{http::header, web, App, HttpServer};
 use dotenv::dotenv;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
+use crate::handlers::web_handler; // 引用 handler 模块
 
 pub struct AppState {
     db: Pool<Postgres>,
@@ -55,7 +56,7 @@ async fn main() -> std::io::Result<()> {
             .supports_credentials();
         App::new()
             .app_data(web::Data::new(AppState { db: pool.clone() }))
-            .configure(handler::config)
+            .configure(web_handler::config)
             .wrap(cors)
             .wrap(Logger::default())
     })
