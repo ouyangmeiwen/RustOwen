@@ -78,29 +78,53 @@ pub async fn libitem_list_handler(
 }
 
 // Create libitem
-#[post("/libitems/")]
+#[post("/libitems/create")]
 async fn create_libitem_handler(
     body: web::Json<CreateLibItemSchema>,
     data: web::Data<AppState>,
 ) -> impl Responder {
-    let new_id = Uuid::new_v4().to_string(); // Generate new UUID
-
+    let new_id = Uuid::new_v4().to_string().replace("-", "");  // 去掉破折号
+    let empty_string = "".to_string(); // 提前创建一个 String
+    let now: NaiveDateTime = Utc::now().naive_utc();
     let query_result = sqlx::query!(
         r#"
-    INSERT INTO libitem (
-        Id, Title, Barcode, IsEnable, ItemState, TenantId
-    ) VALUES (?, ?, ?, ?, ?, ?)
-    "#,
-        new_id,
-        body.Title.to_string(),
-        body.Barcode.to_string(),
-        (true) as i8,   // Ensure it's of type i8 (bool to i8)
-        body.ItemState, // Default to 1 if None (u8)
-        body.TenantId
+        INSERT INTO libitem (
+            Id, CreationTime,IsDeleted, Title, Author, Barcode, IsEnable,CallNo, PreCallNo, CatalogCode, ItemState,
+            PressmarkId, PressmarkName, LocationId, LocationName, BookBarcode, ISBN, PubNo,
+            Publisher, PubDate, Price, Pages, Summary, ItemType, Remark, OriginType, CreateType, TenantId
+        ) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)
+        "#,
+        new_id,                                      // Id
+        now,
+        (false) as i8,                               // IsDeleted
+        body.Title.to_string(),                      // Title
+        body.Author.as_ref().unwrap_or(&empty_string),     // Author
+        body.Barcode.to_string(),                    // Barcode
+        (true) as i8,                               // IsDeleted
+        body.CallNo.as_ref().unwrap_or(&empty_string),     // CallNo
+        body.PreCallNo.as_ref().unwrap_or(&empty_string),  // PreCallNo
+        body.CatalogCode.as_ref().unwrap_or(&empty_string),// CatalogCode
+        body.ItemState,                              // ItemState
+        body.PressmarkId.as_ref().unwrap_or(&empty_string), // PressmarkId
+        body.PressmarkName.as_ref().unwrap_or(&empty_string), // PressmarkName
+        body.LocationId.as_ref().unwrap_or(&empty_string), // LocationId
+        body.LocationName.as_ref().unwrap_or(&empty_string), // LocationName
+        body.BookBarcode.as_ref().unwrap_or(&empty_string), // BookBarcode
+        body.ISBN.as_ref().unwrap_or(&empty_string), // ISBN
+        body.PubNo.unwrap_or_default(),              // PubNo
+        body.Publisher.as_ref().unwrap_or(&empty_string), // Publisher
+        body.PubDate.as_ref().unwrap_or(&empty_string), // PubDate
+        body.Price.as_ref().unwrap_or(&empty_string), // Price
+        body.Pages.as_ref().unwrap_or(&empty_string), // Pages
+        body.Summary.as_ref().unwrap_or(&empty_string), // Summary
+        body.ItemType,                               // ItemType
+        body.Remark.as_ref().unwrap_or(&empty_string), // Remark
+        body.OriginType,                             // OriginType
+        body.CreateType,                             // CreateType
+        body.TenantId                                // TenantId
     )
     .execute(&data.db)
     .await;
-
     match query_result {
         Ok(_) => {
             let libitem =
@@ -151,7 +175,7 @@ async fn get_libitem_handler(path: web::Path<String>, data: web::Data<AppState>)
 }
 
 // Update libitem
-#[patch("/libitems/{id}")]
+#[patch("/libitems/update/{id}")]
 async fn edit_libitem_handler(
     path: web::Path<String>,
     body: web::Json<UpdateLibItemSchema>,
@@ -181,6 +205,7 @@ async fn edit_libitem_handler(
         r#"
     UPDATE libitem 
     SET 
+        LastModificationTime=?,
         Title = ?, 
         Barcode = ?, 
         ItemState = ?, 
@@ -203,6 +228,7 @@ async fn edit_libitem_handler(
         TenantId = ?
     WHERE Id = ?
     "#,
+        now,
         body.Title.as_deref().unwrap_or(&libitem.Title), // 使用 as_deref() 转换为 &str
         body.Barcode.as_deref().unwrap_or(&libitem.Barcode),
         body.ItemState.unwrap_or(libitem.ItemState) as u8,
