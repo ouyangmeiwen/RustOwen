@@ -56,7 +56,7 @@ pub async fn libitem_list_handler(
         CreateType, 
         TenantId 
     FROM libitem
-    ORDER BY Id
+    ORDER BY CreationTime DESC 
     LIMIT ? OFFSET ?"#,
         limit as i32,
         offset as i32
@@ -67,9 +67,46 @@ pub async fn libitem_list_handler(
         return HttpResponse::InternalServerError()
             .json(json!({"status": "error", "message": "Error fetching libitems"}));
     }
-
     let libitems = query_result.unwrap();
-
+    // 将查询结果直接映射到 LibItemModel
+    // let libitems = query_result.unwrap().into_iter().map(|row| {
+    //     LibItemModel {
+    //         Id: row.Id,
+    //         CreationTime: row.CreationTime,
+    //         CreatorUserId: row.CreatorUserId,
+    //         LastModificationTime: row.LastModificationTime,
+    //         LastModifierUserId: row.LastModifierUserId,
+    //         IsDeleted: row.IsDeleted,
+    //         DeleterUserId: row.DeleterUserId,
+    //         DeletionTime: row.DeletionTime,
+    //         InfoId: row.InfoId,
+    //         Title: row.Title,
+    //         Author: row.Author,
+    //         Barcode: row.Barcode,
+    //         IsEnable: row.IsEnable,
+    //         CallNo: row.CallNo,
+    //         PreCallNo: row.PreCallNo,
+    //         CatalogCode: row.CatalogCode,
+    //         ItemState: row.ItemState,
+    //         PressmarkId: row.PressmarkId,
+    //         PressmarkName: row.PressmarkName,
+    //         LocationId: row.LocationId,
+    //         LocationName: row.LocationName,
+    //         BookBarcode: row.BookBarcode,
+    //         ISBN: row.ISBN,
+    //         PubNo: row.PubNo,
+    //         Publisher: row.Publisher,
+    //         PubDate: row.PubDate,
+    //         Price: row.Price,
+    //         Pages: row.Pages,
+    //         Summary: row.Summary,
+    //         ItemType: row.ItemType,
+    //         Remark: row.Remark,
+    //         OriginType: row.OriginType,
+    //         CreateType: row.CreateType,
+    //         TenantId: row.TenantId,
+    //     }
+    // }).collect::<Vec<LibItemModel>>();
     HttpResponse::Ok().json(json!({
         "status": "success",
         "results": libitems.len(),
