@@ -1,1 +1,1 @@
-Rust in MyApp
+Rust is Faster in My Apps
