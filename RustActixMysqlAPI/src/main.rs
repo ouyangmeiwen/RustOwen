@@ -42,7 +42,7 @@ async fn main() -> std::io::Result<()> {
         }
     };
 
-    println!("Server started successfully");
+    println!("start http service:http://127.0.0.1:{}", port);  // 使用 format! 或 {} 来插入变量
 
     HttpServer::new(move || {
         let cors = Cors::default()
