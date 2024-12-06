@@ -1,0 +1,48 @@
+{
+    "Title": "The Great Gatsby111111111",
+    "Barcode": "12345678901231111111111",
+    "ItemState": 1,
+    "PressmarkId": "PRESS00111111",
+    "PressmarkName": "Penguin Classics1111111",
+    "LocationId": "LOC00111111111",
+    "LocationName": "Shelf A11111111111",
+    "BookBarcode": "9876543210987111111",
+    "ISBN": "9780141182636111111",
+    "PubNo": 1,
+    "Publisher": "Penguin Book11111s",
+    "PubDate": "2024-01-011",
+    "Price": "15.991",
+    "Pages": "200",
+    "Summary": "A classic novel of the Jazz Age.111111",
+    "ItemType": 2,
+    "Remark": "First edition.",
+    "OriginType": 1,
+    "CreateType": 1,
+    "TenantId": 1001
+}
+
+
+
+
+{
+    "Title": "The Great Gatsby111111111",
+    "Barcode": "12345678901231111111111",
+    "ItemState": 1,
+    "PressmarkId": "PRESS00111111",
+    "PressmarkName": "Penguin Classics1111111",
+    "LocationId": "LOC00111111111",
+    "LocationName": "Shelf A11111111111",
+    "BookBarcode": "9876543210987111111",
+    "ISBN": "9780141182636111111",
+    "PubNo": 1,
+    "Publisher": "Penguin Book11111s",
+    "PubDate": "2024-01-011",
+    "Price": "15.991",
+    "Pages": "200",
+    "Summary": "A classic novel of the Jazz Age.111111",
+    "ItemType": 2,
+    "Remark": "First edition.",
+    "OriginType": 1,
+    "CreateType": 1,
+    "TenantId": 1001
+}
