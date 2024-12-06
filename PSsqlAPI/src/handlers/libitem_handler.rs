@@ -37,7 +37,7 @@ pub async fn lib_item_list_handler(
     let json_response: serde_json::Value = serde_json::json!({
         "status": "success",
         "results": lib_items.len(),
-        "lib_items": lib_items
+        "libitems": lib_items
     });
     
     HttpResponse::Ok().json(json_response)
@@ -121,7 +121,7 @@ async fn get_lib_item_handler(
             let lib_item_response = serde_json::json!({
                 "status": "success",
                 "data": serde_json::json!({
-                    "lib_item": lib_item
+                    "libitem": lib_item
                 })
             });
 
