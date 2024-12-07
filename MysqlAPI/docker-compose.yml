@@ -1,20 +1,28 @@
 version: '3'
 services:
-  postgres:
-    image: postgres:latest
-    container_name: postgres
+  mysql:
+    image: mysql:latest
+    container_name: mysql
     ports:
-      - '6500:5432'
+      - '6500:3306'  # 默认 MySQL 使用 3306 端口
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password  # 设置 root 用户密码
+      MYSQL_DATABASE: my_database         # 默认创建的数据库
+      MYSQL_USER: user_name               # 设置用户
+      MYSQL_PASSWORD: user_password       # 用户密码
     volumes:
-      - progresDB:/data/postgres
+      - mysql_data:/var/lib/mysql         # 持久化数据
     env_file:
       - ./.env
-  pgAdmin:
-    image: dpage/pgadmin4
-    container_name: pgAdmin
-    env_file:
-      - ./.env
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    environment:
+      PMA_HOST: mysql                     # 指定 MySQL 服务名称
+      PMA_PORT: 3306                      # MySQL 默认端口
     ports:
-      - "5050:80"
+      - "5050:80"                         # Web 管理界面访问端口
+    env_file:
+      - ./.env
 volumes:
-  progresDB:
+  mysql_data:                               # 数据卷，用于持久化 MySQL 数据

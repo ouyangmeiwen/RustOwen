@@ -1,6 +1,7 @@
 pub mod handlers;
 pub mod models;
 pub mod schemas;
+pub mod test;
 
 use crate::handlers::web_handler;
 use actix_cors::Cors;
@@ -8,6 +9,7 @@ use actix_web::middleware::Logger;
 use actix_web::{http::header, web, App, HttpServer};
 use dotenv::dotenv;
 use sqlx::{mysql::MySqlPoolOptions, MySql, Pool}; // 使用 MySql // 引用 handler 模块
+use test::rusttest;
 
 pub struct AppState {
     db: Pool<MySql>, // 将 Pool<Postgres> 改为 Pool<MySql>
@@ -15,6 +17,7 @@ pub struct AppState {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    rusttest::runtest();
     if std::env::var_os("RUST_LOG").is_none() {
         std::env::set_var("RUST_LOG", "actix_web=info");
     }
