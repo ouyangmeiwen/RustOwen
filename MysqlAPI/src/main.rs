@@ -2,6 +2,7 @@ pub mod handlers;
 pub mod models;
 pub mod schemas;
 pub mod test;
+mod configs;
 
 use crate::handlers::web_handler;
 use actix_cors::Cors;
@@ -10,6 +11,7 @@ use actix_web::{http::header, web, App, HttpServer};
 use dotenv::dotenv;
 use sqlx::{mysql::MySqlPoolOptions, MySql, Pool}; // 使用 MySql // 引用 handler 模块
 use test::rusttest;
+use configs::envconfig::Config;
 
 pub struct AppState {
     db: Pool<MySql>, // 将 Pool<Postgres> 改为 Pool<MySql>
@@ -17,21 +19,21 @@ pub struct AppState {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    rusttest::runtest();
-    if std::env::var_os("RUST_LOG").is_none() {
-        std::env::set_var("RUST_LOG", "actix_web=info");
-    }
+    //rusttest::runtest();
     dotenv().ok();
+    let config = Config::new();
+    let log_level = config.log_level.clone();  // 获取日志级别配置
+    if std::env::var_os("RUST_LOG").is_none() {
+        std::env::set_var("RUST_LOG", log_level);
+    }
     env_logger::init();
 
-    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let port: u16 = std::env::var("PORT")
-        .expect("PORT environment variable must be set")
-        .parse()
-        .expect("PORT must be a valid u16");
+    let database_url = &config.database_url;
+    let port = config.port;
+    let max_connections = config.max_connections;
 
     let pool = match MySqlPoolOptions::new() // 使用 MySqlPoolOptions
-        .max_connections(10)
+        .max_connections(max_connections)
         .connect(&database_url)
         .await
     {
@@ -49,7 +51,7 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         let cors = Cors::default()
-            .allowed_origin("http://localhost:3000")
+            .allowed_origin(&config.cors_allowed_origin)  // 直接使用 config
             .allowed_methods(vec!["GET", "POST", "PATCH", "DELETE"])
             .allowed_headers(vec![
                 header::CONTENT_TYPE,
