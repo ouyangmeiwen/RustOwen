@@ -56,7 +56,7 @@ where
         // 获取请求的路径
         let path = req.path();
         // 如果路径是 "/generate_token" 或其他需要跳过认证的路径，直接返回
-        if path.ends_with("/generate_token") {
+        if path.ends_with("/token") {
             // 直接调用下游服务，跳过 JWT 验证
             let fut = self.service.call(req);
             return Box::pin(async move { fut.await });

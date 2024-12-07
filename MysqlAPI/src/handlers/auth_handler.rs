@@ -17,7 +17,7 @@ struct TokenResponse {
 
 /// 生成 JWT 的 Handler
 //http://127.0.0.1:7788/api/generate_token
-#[post("/generate_token")]
+#[post("/token")]
 pub async fn generate_token_handler(
     body: web::Json<TokenRequest>, // 通过请求体接收 user_id
 ) -> impl Responder {
