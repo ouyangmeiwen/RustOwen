@@ -77,7 +77,6 @@ where
                     ) {
                         // 获取 user_id
                         let user_id = decoded_token.claims.sub;
-
                         // Token 有效，继续处理请求
                         let fut = self.service.call(req);
                         return Box::pin(async move { fut.await });
@@ -89,6 +88,5 @@ where
         let res: HttpResponse = HttpResponse::Unauthorized().finish();
         let fut = self.service.call(req);
         return Box::pin(async move { fut.await });
-        
     }
 }
