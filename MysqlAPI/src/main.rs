@@ -60,8 +60,8 @@ async fn main() -> std::io::Result<()> {
                 header::CONTENT_TYPE,
                 header::AUTHORIZATION,
                 header::ACCEPT,
-            ])
-            .supports_credentials();
+            ]);
+            //.supports_credentials();
         App::new()
             .app_data(web::Data::new(AppState { db: pool.clone() }))
             .configure(web_handler::config)
