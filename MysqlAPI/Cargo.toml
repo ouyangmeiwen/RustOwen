@@ -8,6 +8,8 @@ edition = "2021"
 [dependencies]
 actix-cors = "0.6.4"
 actix-web = "4.2.1"
+actix-service = "2.0"  # 添加 actix-service 依赖
+futures = "0.3"  # 添加 futures crate
 chrono = { version = "0.4.23", features = ["serde"] }
 dotenv = "0.15.0"
 env_logger = "0.10.0"
@@ -22,3 +24,4 @@ sqlx = { version = "0.6.2", features = [
 uuid = { version = "1.2.2", features = ["serde", "v4"] }
 ahash = "0.7.5" # or a different version that's stable
 proc-macro2 = { version = "1.0.50", default-features = false }
+jsonwebtoken = "8.1" # 添加这个依赖

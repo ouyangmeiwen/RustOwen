@@ -3,6 +3,8 @@ pub mod models;
 pub mod schemas;
 pub mod test;
 mod configs;
+mod middlewares;
+mod utils;
 
 use crate::handlers::web_handler;
 use actix_cors::Cors;
@@ -12,6 +14,7 @@ use dotenv::dotenv;
 use sqlx::{mysql::MySqlPoolOptions, MySql, Pool}; // 使用 MySql // 引用 handler 模块
 use test::rusttest;
 use configs::envconfig::Config;
+use middlewares::jwt::JwtMiddleware;
 
 pub struct AppState {
     db: Pool<MySql>, // 将 Pool<Postgres> 改为 Pool<MySql>
@@ -64,6 +67,7 @@ async fn main() -> std::io::Result<()> {
             .configure(web_handler::config)
             .wrap(cors)
             .wrap(Logger::default())
+            .wrap(JwtMiddleware) // 应用 JWT 中间件
     })
     .bind(("127.0.0.1", port))?
     .shutdown_timeout(30) // 设置优雅关闭的超时，单位是秒
