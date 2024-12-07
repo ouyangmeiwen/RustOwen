@@ -1,7 +1,7 @@
 use actix_service::{Service, Transform};
 use actix_web::{
     dev::{ServiceRequest, ServiceResponse},
-    http::header,
+    http::header::{self, HeaderName, HeaderValue},
     Error, HttpResponse,
 };
 use actix_web::body::BoxBody; // 仍然需要这个来转换响应体类型
@@ -84,9 +84,16 @@ where
                 }
             }
         }
-        // 如果 token 无效或缺失，返回 Unauthorized
-        let res: HttpResponse = HttpResponse::Unauthorized().finish();
         let fut = self.service.call(req);
-        return Box::pin(async move { fut.await });
+        Box::pin(async move {
+            let mut res = fut.await?;  // 使用拆分后的 req
+            let headers = res.headers_mut();
+            headers.insert(
+                HeaderName::from_static("Content-Type"),
+                HeaderValue::from_static("text/plain"),
+            );
+            // 返回未认证错误 (401 Unauthorized)
+            Err(actix_web::error::ErrorUnauthorized("Unauthorized"))
+        })
     }
 }
