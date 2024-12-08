@@ -94,6 +94,29 @@ fn runprintln() {
     println!("{}", r); // 输出 "hello"
     println!("{}", s); // 输出 "hello"
     println!("{}", "hello"); // 输出 "hello"
+
+    // {} — 通用占位符，用于输出各种类型的值。
+    // {:?} — 用于调试输出，通常用于实现了 Debug trait 的类型。
+    // {:#?} — 用于调试输出，且格式化输出为多行（用于复杂类型）。
+    // {:<width} — 左对齐，占位符宽度指定。
+    // {:>width} — 右对齐，占位符宽度指定。
+    // {:^width} — 居中对齐，占位符宽度指定。
+    // {:.precision} — 用于浮点数，指定小数点后的精度。
+
+    let name = "Alice";
+    let age = 30;
+    let pi = 3.14159;
+
+    println!("Name: {}, Age: {}", name, age);
+    println!("Pi to 2 decimal places: {:.2}", pi);
+    println!("Left-aligned name: {:<10}", name);
+    println!("Right-aligned age: {:>5}", age);
+    println!("Pi with width 10: {:10.3}", pi);
+
+    // Debug output
+    let vec = vec![1, 2, 3];
+    println!("Debug: {:?}", vec);
+    println!("Pretty Debug: {:#?}", vec);
 }
 fn find_item(id: u32) -> Option<String> {
     if id == 1 {
