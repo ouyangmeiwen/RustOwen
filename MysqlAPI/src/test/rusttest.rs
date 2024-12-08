@@ -111,7 +111,7 @@ fn divide(a: i32, b: i32) -> Result<i32, String> {
     }
 }
 
-fn id_in_items(items: &Vec<i32>, id: i32) -> Option<i32> {
+fn id_in_options(items: &Vec<i32>, id: i32) -> Option<i32> {
     if items.contains(&id) {
         Some(id)
     } else {
@@ -119,7 +119,7 @@ fn id_in_items(items: &Vec<i32>, id: i32) -> Option<i32> {
     }
 }
 
-fn id_in_items2(items: &Vec<i32>, id: i32) -> Result<i32, String> {
+fn id_in_results(items: &Vec<i32>, id: i32) -> Result<i32, String> {
     if items.contains(&id) {
         Ok(id)
     } else {
@@ -179,11 +179,11 @@ pub fn runtest() {
     let items = vec![1, 2, 3, 4, 5]; // 使用 vec! 宏创建并初始化 Vec
     let id = 10;
 
-    match id_in_items(&items, id) {
+    match id_in_options(&items, id) {
         Some(found_id) => println!("Found: {}", found_id),
         None => println!("Not found"),
     }
-    match id_in_items2(&items, id) {
+    match id_in_results(&items, id) {
         Ok(id) => {
             println!("found {}", id);
         }
@@ -191,5 +191,38 @@ pub fn runtest() {
             println!("err:{}", err);
         }
     }
-    println!("{}", id_in_items2(&items, id).unwrap_or(-1))
+    println!("{}", id_in_options(&items, id).unwrap_or(-1));
+    println!("{}", id_in_options(&items, id).as_ref().unwrap_or(&-1));
+
+    println!("{}", id_in_results(&items, id).unwrap_or(-1));
+    println!("{}", id_in_results(&items, id).as_ref().unwrap_or(&-1));
+
+    println!(
+        "{}",
+        id_in_options(&items, id).unwrap_or_else(|| {
+            println!("Error occurred"); // 打印错误信息
+            -1 // 返回默认值
+        })
+    );
+    println!(
+        "{}",
+        id_in_options(&items, id).as_ref().unwrap_or_else(|| {
+            println!("Error occurred"); // 打印错误信息
+            &-1 // 返回默认值
+        })
+    );
+    println!(
+        "{}",
+        id_in_results(&items, id).unwrap_or_else(|err| {
+            println!("Error occurred: {}", err); // 打印错误信息
+            -1 // 返回默认值
+        })
+    );
+    println!(
+        "{}",
+        id_in_results(&items, id).as_ref().unwrap_or_else(|err| {
+            println!("Error occurred: {}", err); // 打印错误信息
+            &-1 // 返回默认值
+        })
+    );
 }
