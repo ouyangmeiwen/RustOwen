@@ -88,7 +88,7 @@ fn runclone() {
     println!("{}", b); // b 也可以使用数据
 }
 
-fn test1111() {
+fn runprintln() {
     let s = String::from("hello");
     let r: &str = &s; // 自动解引用
     println!("{}", r); // 输出 "hello"
@@ -134,7 +134,9 @@ pub fn runtest() {
     runtest4();
     runtest5();
     runtest6();
+    runprintln();
     runmove();
+    runmove2();
     runcopy();
     runborrow();
     runclone();
