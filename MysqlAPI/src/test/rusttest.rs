@@ -191,4 +191,5 @@ pub fn runtest() {
             println!("err:{}", err);
         }
     }
+    println!("{}", id_in_items2(&items, id).unwrap_or(-1))
 }
