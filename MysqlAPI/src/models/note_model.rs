@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
-#[derive(Debug, FromRow, Deserialize, Serialize)]
+#[derive(Debug, Default, FromRow, Deserialize, Serialize)]
 #[allow(non_snake_case)]
 pub struct NoteModel {
     pub id: String, // 改为 String 类型
