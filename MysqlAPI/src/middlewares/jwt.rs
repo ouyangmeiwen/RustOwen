@@ -1,21 +1,16 @@
+use crate::models::claims_model::Claims;
 use actix_service::{Service, Transform};
+use actix_web::body::BoxBody; // 仍然需要这个来转换响应体类型
 use actix_web::{
     dev::{ServiceRequest, ServiceResponse},
     http::header::{self, HeaderName, HeaderValue},
     Error, HttpResponse,
 };
-use actix_web::body::BoxBody; // 仍然需要这个来转换响应体类型
 use futures::future::{ok, LocalBoxFuture, Ready};
 use jsonwebtoken::{decode, DecodingKey, Validation};
 use serde::Deserialize;
-use std::task::{Context, Poll};
 use std::env;
-
-#[derive(Debug, Deserialize)]
-pub struct Claims {
-    pub sub: String, // User ID or other identifier
-    pub exp: usize,  // Expiration time
-}
+use std::task::{Context, Poll};
 
 pub struct JwtMiddleware;
 
@@ -55,8 +50,8 @@ where
     fn call(&self, req: ServiceRequest) -> Self::Future {
         // 获取请求的路径
         let path = req.path();
-        // 如果路径是 "/generate_token" 或其他需要跳过认证的路径，直接返回
-        if path.ends_with("/token") {
+        // 如果路径是 "/token" 或其他需要跳过认证的路径，直接返回
+        if path.ends_with("/token") || path.contains("/tokenget") {
             // 直接调用下游服务，跳过 JWT 验证
             let fut = self.service.call(req);
             return Box::pin(async move { fut.await });
@@ -76,7 +71,7 @@ where
                         &Validation::default(),
                     ) {
                         // 获取 user_id
-                        let user_id = decoded_token.claims.sub;
+                        let user_id = decoded_token.claims.user_id;
                         // Token 有效，继续处理请求
                         let fut = self.service.call(req);
                         return Box::pin(async move { fut.await });
@@ -86,7 +81,7 @@ where
         }
         let fut = self.service.call(req);
         Box::pin(async move {
-            let mut res = fut.await?;  // 使用拆分后的 req
+            let mut res = fut.await?; // 使用拆分后的 req
             let headers = res.headers_mut();
             headers.insert(
                 HeaderName::from_static("Content-Type"),

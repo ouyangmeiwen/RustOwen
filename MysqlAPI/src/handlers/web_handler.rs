@@ -1,6 +1,6 @@
+use crate::handlers::auth_handler;
 use crate::handlers::libitem_handler;
-use crate::handlers::note_handler; // 引用 handler 模块
-use crate::handlers::auth_handler; // 引用 handler 模块
+use crate::handlers::note_handler; // 引用 handler 模块 // 引用 handler 模块
 
 use actix_web::{get, web, HttpResponse, Responder};
 use serde_json::json;
@@ -14,7 +14,8 @@ async fn health_checker_handler() -> impl Responder {
 }
 pub fn config(conf: &mut web::ServiceConfig) {
     let scope = web::scope("/api")
-    .service(auth_handler::generate_token_handler)
+        .service(auth_handler::generate_token_handler)
+        .service(auth_handler::generate_token_get_handler)
         .service(health_checker_handler)
         .service(note_handler::note_list_handler)
         .service(note_handler::create_note_handler)
