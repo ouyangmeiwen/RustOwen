@@ -1,10 +1,10 @@
 use crate::handlers::base_handle::check_auth;
+use crate::models::apiresponse_model::ApiResponse;
 use crate::{
     models::libitem_model::LibItemModel,
     schemas::libitem_schema::{CreateLibItemSchema, FilterOptions, UpdateLibItemSchema},
     AppState,
 };
-use actix_web::http::StatusCode;
 use actix_web::{delete, get, patch, post, web, HttpRequest, HttpResponse, Responder};
 use chrono::prelude::*;
 use serde_json::json;
@@ -21,10 +21,7 @@ pub async fn libitem_list_handler(
     let mut user_role = String::new();
     match check_auth(&req).await {
         Err(err) => {
-            return HttpResponse::Unauthorized().json(json!({
-                "status": "error",
-                "message": err.to_string()
-            }));
+            return HttpResponse::Unauthorized().json(ApiResponse::<()>::error(&err.to_string()));
         }
         Ok(claims) => {
             user_id = claims.user_id.to_string();
@@ -84,14 +81,10 @@ pub async fn libitem_list_handler(
     .await;
     if let Err(_) = query_result {
         return HttpResponse::InternalServerError()
-            .json(json!({"status": "error", "message": "Error fetching libitems"}));
+            .json(ApiResponse::<()>::error("Error fetching libitems"));
     }
     let libitems = query_result.unwrap();
-    HttpResponse::Ok().json(json!({
-        "status": "success",
-        "results": libitems.len(),
-        "libitems": libitems
-    }))
+    HttpResponse::Ok().json(ApiResponse::success(libitems))
 }
 
 // Create libitem
@@ -150,20 +143,14 @@ async fn create_libitem_handler(
                     .await;
 
             match libitem {
-                Ok(libitem) => HttpResponse::Ok().json(json!({
-                    "status": "success",
-                    "data": {"libitem": libitem}
-                })),
-                Err(e) => HttpResponse::InternalServerError().json(json!( {
-                    "status": "error",
-                    "message": e.to_string()
-                })),
+                Ok(libitem) => HttpResponse::Ok().json(ApiResponse::success(libitem)),
+                Err(e) => HttpResponse::InternalServerError()
+                    .json(ApiResponse::<()>::error(&e.to_string())),
             }
         }
-        Err(e) => HttpResponse::InternalServerError().json(json!({
-            "status": "error",
-            "message": e.to_string()
-        })),
+        Err(e) => {
+            HttpResponse::InternalServerError().json(ApiResponse::<()>::error(&e.to_string()))
+        }
     }
 }
 
@@ -180,14 +167,11 @@ async fn get_libitem_handler(path: web::Path<String>, data: web::Data<AppState>)
     .await;
 
     match query_result {
-        Ok(libitem) => HttpResponse::Ok().json(json!({
-            "status": "success",
-            "data": {"libitem": libitem}
-        })),
-        Err(_) => HttpResponse::NotFound().json(json!({
-            "status": "fail",
-            "message": format!("LibItem with ID: {} not found", libitem_id)
-        })),
+        Ok(libitem) => HttpResponse::Ok().json(ApiResponse::success(libitem)),
+        Err(e) => HttpResponse::InternalServerError().json(ApiResponse::<()>::error(&format!(
+            "LibItem with ID: {} not found",
+            libitem_id
+        ))),
     }
 }
 
@@ -209,10 +193,10 @@ async fn edit_libitem_handler(
     .await;
 
     if query_result.is_err() {
-        return HttpResponse::NotFound().json(json!({
-            "status": "fail",
-            "message": format!("LibItem with ID: {} not found", libitem_id)
-        }));
+        return HttpResponse::NotFound().json(ApiResponse::<()>::error(&format!(
+            "LibItem with ID: {} not found",
+            libitem_id
+        )));
     }
 
     let libitem = query_result.unwrap();
@@ -306,20 +290,16 @@ async fn edit_libitem_handler(
             .await;
 
             match updated_libitem {
-                Ok(updated_libitem) => HttpResponse::Ok().json(json!({
-                    "status": "success",
-                    "data": {"libitem": updated_libitem}
-                })),
-                Err(e) => HttpResponse::InternalServerError().json(json!( {
-                    "status": "error",
-                    "message": e.to_string()
-                })),
+                Ok(updated_libitem) => {
+                    HttpResponse::Ok().json(ApiResponse::success(updated_libitem))
+                }
+                Err(e) => HttpResponse::InternalServerError()
+                    .json(ApiResponse::<()>::error(&e.to_string())),
             }
         }
-        Err(e) => HttpResponse::InternalServerError().json(json!( {
-            "status": "error",
-            "message": e.to_string()
-        })),
+        Err(e) => {
+            HttpResponse::InternalServerError().json(ApiResponse::<()>::error(&e.to_string()))
+        }
     }
 }
 
@@ -337,11 +317,10 @@ async fn delete_libitem_handler(
         .rows_affected();
 
     if rows_affected == 0 {
-        return HttpResponse::NotFound().json(json!({
-            "status": "fail",
-            "message": format!("LibItem with ID: {} not found", libitem_id)
-        }));
+        return HttpResponse::NotFound().json(ApiResponse::<()>::error(&format!(
+            "LibItem with ID: {} not found",
+            libitem_id
+        )));
     }
-
     HttpResponse::NoContent().finish()
 }
