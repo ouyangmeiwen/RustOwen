@@ -1,5 +1,5 @@
 use crate::{
-    models::note_model::NoteModel,
+    models::{apiresponse_model::ApiResponse, note_model::NoteModel},
     schemas::note_schema::{CreateNoteSchema, FilterOptions, UpdateNoteSchema},
     AppState,
 };
@@ -27,16 +27,10 @@ pub async fn note_list_handler(
 
     if let Err(_) = query_result {
         return HttpResponse::InternalServerError()
-            .json(json!({"status": "error", "message": "Error fetching notes"}));
+            .json(ApiResponse::<()>::error("Error fetching notes"));
     }
-
     let notes = query_result.unwrap();
-
-    HttpResponse::Ok().json(json!({
-        "status": "success",
-        "results": notes.len(),
-        "notes": notes
-    }))
+    HttpResponse::Ok().json(ApiResponse::success(notes))
 }
 #[post("/notes/")]
 async fn create_note_handler(
@@ -70,27 +64,18 @@ async fn create_note_handler(
             .await;
 
             match note {
-                Ok(note) => HttpResponse::Ok().json(json!({
-                    "status": "success",
-                    "data": {"note": note}
-                })),
-                Err(e) => HttpResponse::InternalServerError().json(json!({
-                    "status": "error",
-                    "message": e.to_string()
-                })),
+                Ok(note) => HttpResponse::Ok().json(ApiResponse::success(note)),
+                Err(e) => HttpResponse::InternalServerError()
+                    .json(ApiResponse::<()>::error(&e.to_string())),
             }
         }
         Err(e) => {
             if e.to_string().contains("Duplicate entry") {
-                HttpResponse::BadRequest().json(json!({
-                    "status": "fail",
-                    "message": "Note with that title already exists"
-                }))
+                HttpResponse::BadRequest().json(ApiResponse::<()>::error(
+                    "Note with that title already exists",
+                ))
             } else {
-                HttpResponse::InternalServerError().json(json!({
-                    "status": "error",
-                    "message": e.to_string()
-                }))
+                HttpResponse::InternalServerError().json(ApiResponse::<()>::error(&e.to_string()))
             }
         }
     }
@@ -112,14 +97,11 @@ async fn get_note_handler(
     .await;
 
     match query_result {
-        Ok(note) => HttpResponse::Ok().json(json!({
-            "status": "success",
-            "data": {"note": note}
-        })),
-        Err(_) => HttpResponse::NotFound().json(json!({
-            "status": "fail",
-            "message": format!("Note with ID: {} not found", note_id)
-        })),
+        Ok(note) => HttpResponse::Ok().json(ApiResponse::success(note)),
+        Err(_) => HttpResponse::NotFound().json(ApiResponse::<()>::error(&format!(
+            "Note with ID: {} not found",
+            note_id
+        ))),
     }
 }
 
@@ -143,10 +125,10 @@ async fn edit_note_handler(
 
     // 如果查询不到该记录，返回 404 错误
     if query_result.is_err() {
-        return HttpResponse::NotFound().json(json!({
-            "status": "fail",
-            "message": format!("Note with ID: {} not found", note_id)
-        }));
+        return HttpResponse::NotFound().json(ApiResponse::<()>::error(&format!(
+            "Note with ID: {} not found",
+            note_id
+        )));
     }
 
     let note = query_result.unwrap();
@@ -185,20 +167,14 @@ async fn edit_note_handler(
             .await;
 
             match updated_note {
-                Ok(updated_note) => HttpResponse::Ok().json(json!({
-                    "status": "success",
-                    "data": {"note": updated_note}
-                })),
-                Err(e) => HttpResponse::InternalServerError().json(json!({
-                    "status": "error",
-                    "message": e.to_string()
-                })),
+                Ok(updated_note) => HttpResponse::Ok().json(ApiResponse::success(updated_note)),
+                Err(e) => HttpResponse::InternalServerError()
+                    .json(ApiResponse::<()>::error(&e.to_string())),
             }
         }
-        Err(e) => HttpResponse::InternalServerError().json(json!({
-            "status": "error",
-            "message": e.to_string()
-        })),
+        Err(e) => {
+            HttpResponse::InternalServerError().json(ApiResponse::<()>::error(&e.to_string()))
+        }
     }
 }
 #[delete("/notes/{id}")]
@@ -211,11 +187,10 @@ async fn delete_note_handler(path: web::Path<String>, data: web::Data<AppState>)
         .rows_affected();
 
     if rows_affected == 0 {
-        return HttpResponse::NotFound().json(json!({
-            "status": "fail",
-            "message": format!("Note with ID: {} not found", note_id)
-        }));
+        return HttpResponse::NotFound().json(ApiResponse::<()>::error(&format!(
+            "Note with ID: {} not found",
+            note_id
+        )));
     }
-
-    HttpResponse::NoContent().finish()
+    HttpResponse::Ok().json(ApiResponse::<()>::success_no_contend())
 }

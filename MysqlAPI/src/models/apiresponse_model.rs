@@ -31,4 +31,12 @@ impl<T> ApiResponse<T> {
             data: None,
         }
     }
+    // 处理没有数据返回的情况
+    pub fn success_no_contend() -> Self {
+        ApiResponse {
+            status: "success".to_string(),
+            message: None,
+            data: None,
+        }
+    }
 }
