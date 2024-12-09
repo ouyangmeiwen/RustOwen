@@ -1,6 +1,7 @@
 use crate::models::claims_model::Claims;
 use actix_service::{Service, Transform};
-use actix_web::body::BoxBody; use actix_web::HttpMessage;
+use actix_web::body::BoxBody;
+use actix_web::HttpMessage;
 // 仍然需要这个来转换响应体类型
 use actix_web::{
     dev::{ServiceRequest, ServiceResponse},
@@ -9,11 +10,11 @@ use actix_web::{
 };
 use futures::future::{ok, LocalBoxFuture, Ready};
 use jsonwebtoken::{decode, DecodingKey, Validation};
+use regex::Regex;
 use serde::Deserialize;
+use std::collections::HashMap;
 use std::env;
 use std::task::{Context, Poll};
-use regex::Regex;
-use std::collections::HashMap;
 pub struct JwtMiddleware;
 
 impl<S, B> Transform<S, ServiceRequest> for JwtMiddleware
@@ -52,7 +53,7 @@ where
     fn call(&self, req: ServiceRequest) -> Self::Future {
         // 获取请求的路径
         let path = req.path();
-         // 接口请求以 /api/ 开头
+        // 接口请求以 /api/ 开头
         let re = Regex::new(r"^/api/.*").unwrap();
         if !re.is_match(path) {
             let fut = self.service.call(req);
@@ -64,11 +65,6 @@ where
             let fut = self.service.call(req);
             return Box::pin(async move { fut.await });
         }
-       
-
-
-
-
 
         let auth_header = req.headers().get(header::AUTHORIZATION);
 
@@ -86,20 +82,23 @@ where
                     ) {
                         // 获取 user_id
                         let user_id = decoded_token.claims.user_id;
-                        // Token 有效，继续处理请求
+                        let user_role = decoded_token.claims.role;
+                        // 如果 JWT 校验失败，则在扩展中插入认证失败的标志符
+                        // 如果认证失败，设置标志符到请求的扩展中
+                        let mut flags: HashMap<&str, String> = HashMap::new();
+                        flags.insert("user_id", user_id); //remove
+                        flags.insert("user_role", user_role); //remove
+                        req.extensions_mut().insert(flags); // 将 HashMap 插入到扩展字段中
                         let fut = self.service.call(req);
                         return Box::pin(async move { fut.await });
                     }
                 }
             }
         }
-
         // 如果 JWT 校验失败，则在扩展中插入认证失败的标志符
-       // 如果认证失败，设置标志符到请求的扩展中
-       let mut flags = HashMap::new();
-       flags.insert("auth_failed", true);
-       flags.insert("is_admin", false);  // 你可以插入多个标志符
-       req.extensions_mut().insert(flags);  // 将 HashMap 插入到扩展字段中
+        let mut flags: HashMap<&str, String> = HashMap::new();
+        flags.insert("auth_failed", "true".to_string());
+        req.extensions_mut().insert(flags); // 将 HashMap 插入到扩展字段中
         let fut = self.service.call(req);
         return Box::pin(async move { fut.await });
     }

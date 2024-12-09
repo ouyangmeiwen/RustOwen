@@ -1,13 +1,13 @@
+use crate::handlers::base_handle::check_auth_failed;
 use crate::{
     models::libitem_model::LibItemModel,
     schemas::libitem_schema::{CreateLibItemSchema, FilterOptions, UpdateLibItemSchema},
     AppState,
 };
-use actix_web::{delete,HttpRequest, get, patch, post, web, HttpResponse, Responder};
+use actix_web::{delete, get, patch, post, web, HttpRequest, HttpResponse, Responder};
 use chrono::prelude::*;
 use serde_json::json;
 use uuid::Uuid;
-use  crate::handlers::base_handle::check_auth_failed;
 
 //http://127.0.0.1:7788/api/libitems
 #[get("/libitems")]
@@ -16,9 +16,26 @@ pub async fn libitem_list_handler(
     data: web::Data<AppState>,
     req: HttpRequest, // 接收请求对象作为参数
 ) -> impl Responder {
-    
-    if let Err(err) = check_auth_failed(&req).await {
-        return HttpResponse::Unauthorized().body(err.to_string());  // 如果认证失败，返回 401
+    let mut user_id = String::new();
+    let mut user_role = String::new();
+    let ss = "";
+    match check_auth_failed(&req).await {
+        Ok(response_map) => {
+            // 使用 unwrap_or 来获取字段值，如果没有值则使用默认空字符串
+            user_id = response_map
+                .get("user_id")
+                .unwrap_or(&ss.to_string())
+                .to_string();
+            println!("user_id:{}", &user_id);
+            user_role = response_map
+                .get("user_role")
+                .unwrap_or(&ss.to_string())
+                .to_string();
+            println!("user_role:{}", &user_role);
+        }
+        Err(err) => {
+            return HttpResponse::Unauthorized().body(err.to_string()); // 如果认证失败，返回 401
+        }
     }
 
     let limit = opts.Limit.unwrap_or(10);
@@ -88,7 +105,7 @@ async fn create_libitem_handler(
     body: web::Json<CreateLibItemSchema>,
     data: web::Data<AppState>,
 ) -> impl Responder {
-    let new_id = Uuid::new_v4().to_string().replace("-", "");  // 去掉破折号
+    let new_id = Uuid::new_v4().to_string().replace("-", ""); // 去掉破折号
     let empty_string = "".to_string(); // 提前创建一个 String
     let now: NaiveDateTime = Utc::now().naive_utc();
     let query_result = sqlx::query!(
