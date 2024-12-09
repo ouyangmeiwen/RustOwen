@@ -6,7 +6,7 @@ pub async fn check_auth(req: &HttpRequest) -> Result<HashMap<&str, String>, acti
     // 从请求的扩展字段中获取 HashMap
     if let Some(flags) = req.extensions().get::<HashMap<&str, String>>() {
         if let Some(auth_failed) = flags.get("auth_failed") {
-            if auth_failed.to_string() == "true" {
+            if auth_failed == "true" {
                 // 如果认证失败，返回 401 Unauthorized
                 return Err(actix_web::error::ErrorUnauthorized("Unauthorized"));
             }
