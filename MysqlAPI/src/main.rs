@@ -67,7 +67,7 @@ async fn main() -> std::io::Result<()> {
             .configure(web_handler::config)
             .wrap(cors)
             .wrap(Logger::default())
-        //.wrap(JwtMiddleware) // 应用 JWT 中间件
+            .wrap(JwtMiddleware) // 应用 JWT 中间件
     })
     .bind(("127.0.0.1", port))?
     .shutdown_timeout(30) // 设置优雅关闭的超时，单位是秒

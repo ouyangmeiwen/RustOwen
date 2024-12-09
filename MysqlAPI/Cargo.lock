@@ -2006,6 +2006,7 @@ dependencies = [
  "futures",
  "jsonwebtoken",
  "proc-macro2",
+ "regex",
  "serde",
  "serde_json",
  "sqlx",

@@ -11,7 +11,7 @@ use jsonwebtoken::{decode, DecodingKey, Validation};
 use serde::Deserialize;
 use std::env;
 use std::task::{Context, Poll};
-
+use regex::Regex;
 pub struct JwtMiddleware;
 
 impl<S, B> Transform<S, ServiceRequest> for JwtMiddleware
@@ -50,12 +50,24 @@ where
     fn call(&self, req: ServiceRequest) -> Self::Future {
         // 获取请求的路径
         let path = req.path();
+         // 接口请求以 /api/ 开头
+        let re = Regex::new(r"^/api/.*").unwrap();
+        if !re.is_match(path) {
+            let fut = self.service.call(req);
+            return Box::pin(async move { fut.await });
+        }
         // 如果路径是 "/token" 或其他需要跳过认证的路径，直接返回
         if path.ends_with("/token") || path.contains("/tokenget") {
             // 直接调用下游服务，跳过 JWT 验证
             let fut = self.service.call(req);
             return Box::pin(async move { fut.await });
         }
+       
+
+
+
+
+
         let auth_header = req.headers().get(header::AUTHORIZATION);
 
         if let Some(auth_header) = auth_header {
