@@ -3,17 +3,24 @@ use crate::{
     schemas::libitem_schema::{CreateLibItemSchema, FilterOptions, UpdateLibItemSchema},
     AppState,
 };
-use actix_web::{delete, get, patch, post, web, HttpResponse, Responder};
+use actix_web::{delete,HttpRequest, get, patch, post, web, HttpResponse, Responder};
 use chrono::prelude::*;
 use serde_json::json;
 use uuid::Uuid;
+use  crate::handlers::base_handle::check_auth_failed;
 
 //http://127.0.0.1:7788/api/libitems
 #[get("/libitems")]
 pub async fn libitem_list_handler(
     opts: web::Query<FilterOptions>,
     data: web::Data<AppState>,
+    req: HttpRequest, // 接收请求对象作为参数
 ) -> impl Responder {
+    
+    if let Err(err) = check_auth_failed(&req).await {
+        return HttpResponse::Unauthorized().body(err.to_string());  // 如果认证失败，返回 401
+    }
+
     let limit = opts.Limit.unwrap_or(10);
     let offset = (opts.Page.unwrap_or(1) - 1) * limit;
 
@@ -68,45 +75,6 @@ pub async fn libitem_list_handler(
             .json(json!({"status": "error", "message": "Error fetching libitems"}));
     }
     let libitems = query_result.unwrap();
-    // 将查询结果直接映射到 LibItemModel
-    // let libitems = query_result.unwrap().into_iter().map(|row| {
-    //     LibItemModel {
-    //         Id: row.Id,
-    //         CreationTime: row.CreationTime,
-    //         CreatorUserId: row.CreatorUserId,
-    //         LastModificationTime: row.LastModificationTime,
-    //         LastModifierUserId: row.LastModifierUserId,
-    //         IsDeleted: row.IsDeleted,
-    //         DeleterUserId: row.DeleterUserId,
-    //         DeletionTime: row.DeletionTime,
-    //         InfoId: row.InfoId,
-    //         Title: row.Title,
-    //         Author: row.Author,
-    //         Barcode: row.Barcode,
-    //         IsEnable: row.IsEnable,
-    //         CallNo: row.CallNo,
-    //         PreCallNo: row.PreCallNo,
-    //         CatalogCode: row.CatalogCode,
-    //         ItemState: row.ItemState,
-    //         PressmarkId: row.PressmarkId,
-    //         PressmarkName: row.PressmarkName,
-    //         LocationId: row.LocationId,
-    //         LocationName: row.LocationName,
-    //         BookBarcode: row.BookBarcode,
-    //         ISBN: row.ISBN,
-    //         PubNo: row.PubNo,
-    //         Publisher: row.Publisher,
-    //         PubDate: row.PubDate,
-    //         Price: row.Price,
-    //         Pages: row.Pages,
-    //         Summary: row.Summary,
-    //         ItemType: row.ItemType,
-    //         Remark: row.Remark,
-    //         OriginType: row.OriginType,
-    //         CreateType: row.CreateType,
-    //         TenantId: row.TenantId,
-    //     }
-    // }).collect::<Vec<LibItemModel>>();
     HttpResponse::Ok().json(json!({
         "status": "success",
         "results": libitems.len(),

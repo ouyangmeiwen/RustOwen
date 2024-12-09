@@ -1,6 +1,7 @@
 use crate::models::claims_model::Claims;
 use actix_service::{Service, Transform};
-use actix_web::body::BoxBody; // 仍然需要这个来转换响应体类型
+use actix_web::body::BoxBody; use actix_web::HttpMessage;
+// 仍然需要这个来转换响应体类型
 use actix_web::{
     dev::{ServiceRequest, ServiceResponse},
     http::header::{self, HeaderName, HeaderValue},
@@ -12,6 +13,7 @@ use serde::Deserialize;
 use std::env;
 use std::task::{Context, Poll};
 use regex::Regex;
+use std::collections::HashMap;
 pub struct JwtMiddleware;
 
 impl<S, B> Transform<S, ServiceRequest> for JwtMiddleware
@@ -91,16 +93,14 @@ where
                 }
             }
         }
+
+        // 如果 JWT 校验失败，则在扩展中插入认证失败的标志符
+       // 如果认证失败，设置标志符到请求的扩展中
+       let mut flags = HashMap::new();
+       flags.insert("auth_failed", true);
+       flags.insert("is_admin", false);  // 你可以插入多个标志符
+       req.extensions_mut().insert(flags);  // 将 HashMap 插入到扩展字段中
         let fut = self.service.call(req);
-        Box::pin(async move {
-            let mut res = fut.await?; // 使用拆分后的 req
-            let headers = res.headers_mut();
-            headers.insert(
-                HeaderName::from_static("Content-Type"),
-                HeaderValue::from_static("text/plain"),
-            );
-            // 返回未认证错误 (401 Unauthorized)
-            Err(actix_web::error::ErrorUnauthorized("Unauthorized"))
-        })
+        return Box::pin(async move { fut.await });
     }
 }
