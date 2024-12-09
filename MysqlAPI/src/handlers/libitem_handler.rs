@@ -19,7 +19,6 @@ pub async fn libitem_list_handler(
 ) -> impl Responder {
     let mut user_id = String::new();
     let mut user_role = String::new();
-    let ss = "";
     match check_auth(&req).await {
         Err(err) => {
             return HttpResponse::Unauthorized().json(json!({
@@ -27,17 +26,10 @@ pub async fn libitem_list_handler(
                 "message": err.to_string()
             }));
         }
-        Ok(response_map) => {
-            // 使用 unwrap_or 来获取字段值，如果没有值则使用默认空字符串
-            user_id = response_map
-                .get("user_id")
-                .unwrap_or(&ss.to_string())
-                .to_string();
+        Ok(claims) => {
+            user_id = claims.user_id.to_string();
             println!("user_id:{}", &user_id);
-            user_role = response_map
-                .get("user_role")
-                .unwrap_or(&ss.to_string())
-                .to_string();
+            user_role = claims.username.to_string();
             println!("user_role:{}", &user_role);
         }
     }

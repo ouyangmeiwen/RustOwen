@@ -80,14 +80,9 @@ where
                         &DecodingKey::from_secret(secret.as_ref()),
                         &Validation::default(),
                     ) {
-                        // 获取 user_id
-                        let user_id = decoded_token.claims.user_id;
-                        let user_role = decoded_token.claims.role;
-                        // 如果 JWT 校验失败，则在扩展中插入认证失败的标志符
-                        // 如果认证失败，设置标志符到请求的扩展中
                         let mut flags: HashMap<&str, String> = HashMap::new();
-                        flags.insert("user_id", user_id); //remove
-                        flags.insert("user_role", user_role); //remove
+                        flags.insert("user_id", decoded_token.claims.user_id.to_string()); //remove
+                        flags.insert("user_role", decoded_token.claims.role.to_string()); //remove
                         req.extensions_mut().insert(flags); // 将 HashMap 插入到扩展字段中
                         let fut = self.service.call(req);
                         return Box::pin(async move { fut.await });
