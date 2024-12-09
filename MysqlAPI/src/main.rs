@@ -53,7 +53,7 @@ async fn main() -> std::io::Result<()> {
     println!("start http service:http://127.0.0.1:{}", port); // 使用 format! 或 {} 来插入变量
 
     HttpServer::new(move || {
-        let cors = Cors::default()
+        let cors: Cors = Cors::default()
             .allowed_origin(&config.cors_allowed_origin) // 直接使用 config
             .allowed_methods(vec!["GET", "POST", "PATCH", "DELETE"])
             .allowed_headers(vec![

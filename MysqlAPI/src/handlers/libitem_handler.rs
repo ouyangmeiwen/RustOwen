@@ -1,9 +1,10 @@
-use crate::handlers::base_handle::check_auth_failed;
+use crate::handlers::base_handle::check_auth;
 use crate::{
     models::libitem_model::LibItemModel,
     schemas::libitem_schema::{CreateLibItemSchema, FilterOptions, UpdateLibItemSchema},
     AppState,
 };
+use actix_web::http::StatusCode;
 use actix_web::{delete, get, patch, post, web, HttpRequest, HttpResponse, Responder};
 use chrono::prelude::*;
 use serde_json::json;
@@ -19,7 +20,13 @@ pub async fn libitem_list_handler(
     let mut user_id = String::new();
     let mut user_role = String::new();
     let ss = "";
-    match check_auth_failed(&req).await {
+    match check_auth(&req).await {
+        Err(err) => {
+            return HttpResponse::Unauthorized().json(json!({
+                "status": "error",
+                "message": err.to_string()
+            }));
+        }
         Ok(response_map) => {
             // 使用 unwrap_or 来获取字段值，如果没有值则使用默认空字符串
             user_id = response_map
@@ -33,11 +40,7 @@ pub async fn libitem_list_handler(
                 .to_string();
             println!("user_role:{}", &user_role);
         }
-        Err(err) => {
-            return HttpResponse::Unauthorized().body(err.to_string()); // 如果认证失败，返回 401
-        }
     }
-
     let limit = opts.Limit.unwrap_or(10);
     let offset = (opts.Page.unwrap_or(1) - 1) * limit;
 
