@@ -84,7 +84,27 @@ pub async fn libitem_list_handler(
             .json(ApiResponse::<()>::error("Error fetching libitems"));
     }
     let libitems = query_result.unwrap();
-    HttpResponse::Ok().json(ApiResponse::success(libitems))
+
+    // 获取总数
+    let count_result_query = sqlx::query!(
+        r#"
+    SELECT COUNT(*) as total
+    FROM libitem
+    "#,
+    )
+    .fetch_one(&data.db)
+    .await;
+    // 处理结果
+    let mut total_count: i64 = 0;
+    match count_result_query {
+        Ok(count_row) => {
+            total_count = count_row.total;
+        }
+        Err(_) => {
+            total_count = 0;
+        }
+    }
+    HttpResponse::Ok().json(ApiResponse::success_with_count(libitems, total_count))
 }
 
 // Create libitem
