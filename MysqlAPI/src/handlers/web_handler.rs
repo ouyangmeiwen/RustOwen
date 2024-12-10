@@ -26,6 +26,7 @@ pub fn config(conf: &mut web::ServiceConfig) {
         .service(libitem_handler::libitem_list_handler)
         .service(libitem_handler::create_libitem_handler)
         .service(libitem_handler::get_libitem_handler)
+        .service(libitem_handler::get_item_bybarcode_handle)
         .service(libitem_handler::edit_libitem_handler)
         .service(libitem_handler::delete_libitem_handler);
 

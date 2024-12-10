@@ -1,3 +1,6 @@
+use std::f32::consts::E;
+use std::path;
+
 use crate::handlers::base_handle::check_auth;
 use crate::models::apiresponse_model::ApiResponse;
 use crate::{
@@ -5,6 +8,7 @@ use crate::{
     schemas::libitem_schema::{CreateLibItemSchema, FilterOptions, UpdateLibItemSchema},
     AppState,
 };
+use actix_web::web::Json;
 use actix_web::{delete, get, patch, post, web, HttpRequest, HttpResponse, Responder};
 use chrono::prelude::*;
 use serde_json::json;
@@ -192,6 +196,25 @@ async fn get_libitem_handler(path: web::Path<String>, data: web::Data<AppState>)
             "LibItem with ID: {} not found",
             libitem_id
         ))),
+    }
+}
+//http://127.0.0.1:7788/api/libitems/getitembybarcode/0307900
+#[get("/libitems/getitembybarcode/{barcode}")]
+async fn get_item_bybarcode_handle(
+    path: web::Path<String>,
+    data: web::Data<AppState>,
+) -> impl Responder {
+    let barcode = path.into_inner();
+    let item_query = sqlx::query_as!(
+        LibItemModel,
+        "select * from libitem where barcode=?",
+        barcode
+    )
+    .fetch_all(&data.db)
+    .await;
+    match item_query {
+        Ok(libitems) => HttpResponse::Ok().json(ApiResponse::success(libitems)),
+        Err(e) => HttpResponse::InternalServerError().json(ApiResponse::<()>::error("")),
     }
 }
 
