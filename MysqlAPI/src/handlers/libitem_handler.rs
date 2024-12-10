@@ -323,5 +323,5 @@ async fn delete_libitem_handler(
         )));
     }
     //HttpResponse::NoContent().finish()
-    HttpResponse::Ok().json(ApiResponse::<()>::success_no_contend())
+    HttpResponse::Ok().json(ApiResponse::<()>::success_without_contend())
 }

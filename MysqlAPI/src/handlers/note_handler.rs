@@ -193,5 +193,5 @@ async fn delete_note_handler(path: web::Path<String>, data: web::Data<AppState>)
         )));
     }
     //HttpResponse::NoContent().finish()
-    HttpResponse::Ok().json(ApiResponse::<()>::success_no_contend())
+    HttpResponse::Ok().json(ApiResponse::<()>::success_without_contend())
 }

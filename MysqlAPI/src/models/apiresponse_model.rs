@@ -5,6 +5,7 @@ pub struct ApiResponse<T> {
     pub status: String, // "success", "error", "fail"
     pub message: Option<String>,
     pub data: Option<T>,
+    pub count: Option<i64>,
 }
 
 impl<T> ApiResponse<T> {
@@ -13,14 +14,31 @@ impl<T> ApiResponse<T> {
             status: "success".to_string(),
             message: None,
             data: Some(data),
+            count: None,
         }
     }
-
+    pub fn success_without_contend() -> Self {
+        ApiResponse {
+            status: "success".to_string(),
+            message: None,
+            data: None,
+            count: None,
+        }
+    }
+    pub fn success_with_count(data: T, cnt: i64) -> Self {
+        ApiResponse {
+            status: "success".to_string(),
+            message: None,
+            data: Some(data),
+            count: Some(cnt),
+        }
+    }
     pub fn error(message: &str) -> Self {
         ApiResponse {
             status: "error".to_string(),
             message: Some(message.to_string()),
             data: None,
+            count: None,
         }
     }
 
@@ -29,14 +47,7 @@ impl<T> ApiResponse<T> {
             status: "fail".to_string(),
             message: Some(message.to_string()),
             data: None,
-        }
-    }
-    // 处理没有数据返回的情况
-    pub fn success_no_contend() -> Self {
-        ApiResponse {
-            status: "success".to_string(),
-            message: None,
-            data: None,
+            count: None,
         }
     }
 }
