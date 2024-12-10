@@ -1,5 +1,4 @@
 use serde::Serialize;
-
 #[derive(Serialize)]
 pub struct ApiResponse<T> {
     pub status: String, // "success", "error", "fail"
@@ -17,7 +16,7 @@ impl<T> ApiResponse<T> {
             count: None,
         }
     }
-    pub fn success_without_contend() -> Self {
+    pub fn success_without_data() -> Self {
         ApiResponse {
             status: "success".to_string(),
             message: None,
