@@ -24,7 +24,7 @@ pub struct AppState {
 async fn main() -> std::io::Result<()> {
     rusttest::runtest();
     dotenv().ok();
-    let config = Config::new();
+    let config: Config = Config::new();
     let log_level = config.log_level.clone(); // 获取日志级别配置
     if std::env::var_os("RUST_LOG").is_none() {
         std::env::set_var("RUST_LOG", log_level);

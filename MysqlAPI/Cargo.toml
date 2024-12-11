@@ -29,3 +29,4 @@ regex = "1"
 redis = { version = "0.27.6", features = ["aio","tokio-comp"] }
 tokio = { version = "1", features = ["full"] }
 async-std = "1.10"
+once_cell = "1.10.0"  # 添加 once_cell 库

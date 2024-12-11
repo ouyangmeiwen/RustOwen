@@ -1,3 +1,5 @@
+use crate::configs::envconfig::Config;
+use once_cell::sync::Lazy; // 导入 Lazy
 use redis::aio::Connection;
 use redis::{AsyncCommands, Client, RedisResult};
 use std::sync::Arc;
@@ -5,24 +7,64 @@ use tokio::sync::Mutex;
 
 pub struct RedisClient {
     client: Arc<Mutex<Client>>,
+    pool: Arc<Mutex<Option<redis::aio::Connection>>>, // Option 用来存储连接池
 }
+// 创建全局 RedisClient 实例
+pub static REDIS_CLIENT: Lazy<Arc<Mutex<RedisClient>>> = Lazy::new(|| {
+    // 这里不能使用 await, 所以必须在一个 async block 中初始化
+    Arc::new(Mutex::new(
+        tokio::runtime::Runtime::new().unwrap().block_on(async {
+            RedisClient::default().await.unwrap() // 使用 block_on 等待 async 初始化
+        }),
+    ))
+});
 
 impl RedisClient {
     // 创建一个新的 RedisClient 实例
     pub async fn new(redis_url: &str) -> Result<Self, String> {
         let client = Client::open(redis_url)
             .map_err(|e| format!("Failed to create Redis client: {:?}", e))?;
+        let pool = Arc::new(Mutex::new(None)); // 初始为空，可以根据需求初始化连接池
         Ok(RedisClient {
             client: Arc::new(Mutex::new(client)),
+            pool,
+        })
+    }
+    // 使用默认配置创建 RedisClient 实例
+    pub async fn default() -> Result<Self, String> {
+        let config: Config = Config::new();
+        let redis_url = &config.redis_url;
+        let client = Client::open(redis_url.to_string())
+            .map_err(|e| format!("Failed to create Redis client: {:?}", e))?;
+        let pool = Arc::new(Mutex::new(None)); // 初始为空
+        Ok(RedisClient {
+            client: Arc::new(Mutex::new(client)),
+            pool,
         })
     }
 
-    // 获取 Redis 连接
-    async fn get_connection(&self) -> RedisResult<Connection> {
-        let client = self.client.lock().await;
-        client.get_async_connection().await
+    // 获取 Redis 连接池中的连接
+    pub async fn get_connection(&self) -> RedisResult<redis::aio::Connection> {
+        let mut pool_lock = self.pool.lock().await;
+
+        // 如果池中没有连接，创建一个新的连接并存储在池中
+        if pool_lock.is_none() {
+            let client_lock = self.client.lock().await;
+            let con = client_lock.get_async_connection().await?;
+            *pool_lock = Some(con);
+        }
+
+        // 返回连接池中的连接
+        pool_lock.take().ok_or_else(|| {
+            redis::RedisError::from((redis::ErrorKind::IoError, "Connection pool is empty"))
+        })
     }
 
+    // 关闭连接池并释放连接
+    pub async fn close_connection(&self) {
+        let mut pool_lock = self.pool.lock().await;
+        *pool_lock = None; // 将连接池设置为空
+    }
     // 设置 Redis 键值对
     pub async fn set(&self, key: &str, value: &str) -> Result<(), String> {
         let mut con = self

@@ -2070,6 +2070,7 @@ dependencies = [
  "env_logger",
  "futures",
  "jsonwebtoken",
+ "once_cell",
  "proc-macro2",
  "redis",
  "regex",
