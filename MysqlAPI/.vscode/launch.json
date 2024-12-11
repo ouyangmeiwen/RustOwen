@@ -7,15 +7,15 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'rust-mysql-crud-sqlx'",
+            "name": "Debug executable 'rust-mysql-sqx-api'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=rust-mysql-crud-sqlx",
-                    "--package=rust-mysql-crud-sqlx"
+                    "--bin=rust-mysql-sqx-api",
+                    "--package=rust-mysql-sqx-api"
                 ],
                 "filter": {
-                    "name": "rust-mysql-crud-sqlx",
+                    "name": "rust-mysql-sqx-api",
                     "kind": "bin"
                 }
             },
@@ -25,16 +25,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'rust-mysql-crud-sqlx'",
+            "name": "Debug unit tests in executable 'rust-mysql-sqx-api'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=rust-mysql-crud-sqlx",
-                    "--package=rust-mysql-crud-sqlx"
+                    "--bin=rust-mysql-sqx-api",
+                    "--package=rust-mysql-sqx-api"
                 ],
                 "filter": {
-                    "name": "rust-mysql-crud-sqlx",
+                    "name": "rust-mysql-sqx-api",
                     "kind": "bin"
                 }
             },
