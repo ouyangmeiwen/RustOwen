@@ -7,15 +7,15 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'rust-postgres-crud-sqlx'",
+            "name": "Debug executable 'rust-postgres-sqlx-api'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=rust-postgres-crud-sqlx",
-                    "--package=rust-postgres-crud-sqlx"
+                    "--bin=rust-postgres-sqlx-api",
+                    "--package=rust-postgres-sqlx-api"
                 ],
                 "filter": {
-                    "name": "rust-postgres-crud-sqlx",
+                    "name": "rust-postgres-sqlx-api",
                     "kind": "bin"
                 }
             },
@@ -25,16 +25,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'rust-postgres-crud-sqlx'",
+            "name": "Debug unit tests in executable 'rust-postgres-sqlx-api'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=rust-postgres-crud-sqlx",
-                    "--package=rust-postgres-crud-sqlx"
+                    "--bin=rust-postgres-sqlx-api",
+                    "--package=rust-postgres-sqlx-api"
                 ],
                 "filter": {
-                    "name": "rust-postgres-crud-sqlx",
+                    "name": "rust-postgres-sqlx-api",
                     "kind": "bin"
                 }
             },
