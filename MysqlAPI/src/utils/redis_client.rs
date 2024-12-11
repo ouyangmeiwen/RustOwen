@@ -44,20 +44,9 @@ impl RedisClient {
 
         // 如果 REDIS_CLIENT 已经存在，复用已有的 RedisClient
         if let Some(ref client) = *redis_client_guard {
-            // 获取连接池中的连接
-            let mut con = client
-                .get_connection()
-                .await
-                .map_err(|e| format!("Failed to get connection: {:?}", e))?;
-            let pool = Arc::new(Mutex::new(Some(con))); // 使用连接池
-
-            // 返回现有的 RedisClient 实例
-            return Ok(RedisClient {
-                client: Arc::clone(&client.client), // 使用现有的 client
-                pool,
-            });
+            // 如果连接池为空，创建连接
+            return Ok(client.clone());
         }
-
         // 如果 REDIS_CLIENT 不存在，创建新的实例
         let client = Client::open(redis_url.to_string())
             .map_err(|e| format!("Failed to create Redis client: {:?}", e))?;
