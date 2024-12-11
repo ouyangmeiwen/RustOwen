@@ -59,7 +59,7 @@ impl RedisClient {
     }
 
     // 设置 Redis 键的过期时间
-    pub async fn expire(&self, key: &str, expire_seconds: usize) -> Result<(), String> {
+    pub async fn expire(&self, key: &str, expire_seconds: i64) -> Result<(), String> {
         let mut con = self
             .get_connection()
             .await
@@ -82,12 +82,7 @@ impl RedisClient {
     }
 
     // 设置 Redis 键值对并设置过期时间
-    pub async fn set_ex(
-        &self,
-        key: &str,
-        value: &str,
-        expire_seconds: usize,
-    ) -> Result<(), String> {
+    pub async fn set_ex(&self, key: &str, value: &str, expire_seconds: u64) -> Result<(), String> {
         let mut con = self
             .get_connection()
             .await
@@ -185,27 +180,27 @@ impl RedisClient {
             .map_err(|e| format!("Failed to get values from list: {:?}", e))
     }
 
-    // 从 Redis 列表中移除并返回左侧的元素
-    pub async fn lpop(&self, list_key: &str) -> Result<String, String> {
-        let mut con = self
-            .get_connection()
-            .await
-            .map_err(|e| format!("Redis connection error: {:?}", e))?;
-        con.lpop(list_key)
-            .await
-            .map_err(|e| format!("Failed to pop value from list: {:?}", e))
-    }
+    // // 从 Redis 列表中移除并返回左侧的元素
+    // pub async fn lpop(&self, list_key: &str) -> Result<String, String> {
+    //     let mut con = self
+    //         .get_connection()
+    //         .await
+    //         .map_err(|e| format!("Redis connection error: {:?}", e))?;
+    //     con.lpop(list_key)
+    //         .await
+    //         .map_err(|e| format!("Failed to pop value from list: {:?}", e))
+    // }
 
-    // 从 Redis 列表中移除并返回右侧的元素
-    pub async fn rpop(&self, list_key: &str) -> Result<String, String> {
-        let mut con = self
-            .get_connection()
-            .await
-            .map_err(|e| format!("Redis connection error: {:?}", e))?;
-        con.rpop(list_key)
-            .await
-            .map_err(|e| format!("Failed to pop value from list: {:?}", e))
-    }
+    // // 从 Redis 列表中移除并返回右侧的元素
+    // pub async fn rpop(&self, list_key: &str) -> Result<String, String> {
+    //     let mut con = self
+    //         .get_connection()
+    //         .await
+    //         .map_err(|e| format!("Redis connection error: {:?}", e))?;
+    //     con.rpop(list_key)
+    //         .await
+    //         .map_err(|e| format!("Failed to pop value from list: {:?}", e))
+    // }
 
     // 设置 Redis 集合
     pub async fn sadd(&self, set_key: &str, values: Vec<String>) -> Result<(), String> {
