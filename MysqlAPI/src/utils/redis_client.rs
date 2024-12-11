@@ -1,10 +1,13 @@
 use crate::models::redisclient_model::RedisClient;
 use actix_web::body::None;
+use deadpool_redis::redis::aio::PubSub;
 use deadpool_redis::redis::AsyncCommands;
 use deadpool_redis::{Config, Connection};
+use futures::future::ok;
+use futures::stream::StreamExt;
 use redis::AsyncCommands as RedisAsyncCommands; // Alias to avoid naming conflicts
 use std::sync::Arc;
-use tokio::sync::Mutex;
+use tokio::sync::Mutex; // Import StreamExt to use `.next()`
 impl RedisClient {
     pub async fn new(redis_url: &str) -> Result<Self, String> {
         let config = Config::from_url(redis_url);
@@ -466,6 +469,38 @@ impl RedisClient {
     // 订阅频道
     pub async fn subscribe(&self, channels: Vec<&str>) -> Result<(), String> {
         Ok(())
+        // let mut con = self
+        //     .get_connection()
+        //     .await
+        //     .map_err(|e| format!("Redis connection error: {:?}", e))?;
+
+        // // Create a PubSub connection for subscribing
+        // let mut pubsub: PubSub = con.into_pubsub();
+
+        // // Subscribe to the provided channels
+        // pubsub
+        //     .subscribe(channels)
+        //     .await
+        //     .map_err(|e| format!("Failed to subscribe to channels: {:?}", e))?;
+
+        // // Listen for messages from the subscribed channels
+        // loop {
+        //     // Use `.next()` to get the next message from the stream
+        //     if let Some(msg) = pubsub.next().await {
+        //         // Process the message (e.g., get the payload)
+        //         match msg.get_payload::<String>().await {
+        //             Ok(payload) => {
+        //                 // Print the received message
+        //                 println!("Received message: {}", payload);
+        //                 // You can implement additional logic here to handle the message
+        //             }
+        //             Err(e) => {
+        //                 // Handle error when reading payload
+        //                 println!("Error reading message payload: {:?}", e);
+        //             }
+        //         }
+        //     }
+        // }
     }
 
     // 获取分布式锁
