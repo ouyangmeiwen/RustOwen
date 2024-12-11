@@ -1,9 +1,11 @@
 use calamine::RangeDeserializerBuilder;
 use calamine::{open_workbook_auto, DataType, Reader};
 use std::error::Error;
+use std::time::Instant;
 fn read_excel(file_path: &str) -> Result<(), Box<dyn std::error::Error>> {
     let mut workbook = open_workbook_auto(file_path)?;
-
+    // Start measuring time for a specific code block
+    let start = Instant::now();
     if let Some(Ok(range)) = workbook.worksheet_range("Sheet1") {
         for row in range.rows() {
             // Iterate over each cell in the row
@@ -23,7 +25,12 @@ fn read_excel(file_path: &str) -> Result<(), Box<dyn std::error::Error>> {
     } else {
         println!("Sheet not found or unable to read.");
     }
-
+    // Code after the time-measured block
+    let duration = start.elapsed();
+    println!(
+        "Time taken for the block: {} milliseconds",
+        duration.as_secs()
+    );
     Ok(())
 }
 
