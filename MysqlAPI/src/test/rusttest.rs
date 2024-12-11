@@ -1,5 +1,7 @@
 use std::vec;
 
+use crate::test::redistest;
+
 struct Body {
     title: Option<String>,
 }
@@ -250,4 +252,5 @@ pub fn runtest() {
             &-1 // 返回默认值
         })
     );
+    let _ = redistest::testRedis();
 }

@@ -26,3 +26,4 @@ ahash = "0.7.5" # or a different version that's stable
 proc-macro2 = { version = "1.0.50", default-features = false }
 jsonwebtoken = "8.1" # 添加这个依赖
 regex = "1"
+redis = { version = "0.27.6" }
