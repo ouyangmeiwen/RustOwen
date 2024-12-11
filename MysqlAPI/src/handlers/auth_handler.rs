@@ -1,5 +1,4 @@
-use crate::utils::redis_client::RedisClient;
-use crate::AppState;
+use crate::models::appstate_model::AppState;
 use crate::{
     models::claims_model::Claims, models::claims_model::TokenRequest,
     models::claims_model::TokenResponse, utils::jwt_utils::create_jwt,

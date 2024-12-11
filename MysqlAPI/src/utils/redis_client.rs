@@ -1,23 +1,11 @@
 use crate::configs::envconfig::Config;
+use crate::models::redisclient_model::RedisClient;
 use once_cell::sync::Lazy; // 导入 Lazy
 use redis::aio::Connection;
 use redis::{AsyncCommands, Client, RedisResult};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-pub struct RedisClient {
-    client: Arc<Mutex<Client>>,
-    pool: Arc<Mutex<Option<redis::aio::Connection>>>, // Option 用来存储连接池
-}
-impl Clone for RedisClient {
-    fn clone(&self) -> Self {
-        // 使用 Arc::clone 来共享引用计数
-        RedisClient {
-            client: Arc::clone(&self.client),
-            pool: Arc::clone(&self.pool),
-        }
-    }
-}
 // // 创建全局 RedisClient 单例实例
 // pub static REDIS_CLIENT: Lazy<Arc<Mutex<Option<RedisClient>>>> = Lazy::new(|| {
 //     Arc::new(Mutex::new(None)) // 初始为空
