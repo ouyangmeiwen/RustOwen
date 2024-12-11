@@ -4,7 +4,7 @@ services:
     image: mysql:latest
     container_name: mysql
     ports:
-      - '6500:3306'  # 默认 MySQL 使用 3306 端口
+      - '3306:3306'  # 默认 MySQL 使用 3306 端口
     environment:
       MYSQL_ROOT_PASSWORD: root_password  # 设置 root 用户密码
       MYSQL_DATABASE: my_database         # 默认创建的数据库

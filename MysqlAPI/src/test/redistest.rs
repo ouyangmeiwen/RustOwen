@@ -104,7 +104,7 @@ fn set_key_expiration(con: &mut redis::Connection, key: &str, seconds: i64) -> R
 }
 
 // 示例用法
-pub fn testRedis() -> RedisResult<()> {
+pub fn test_redis() -> RedisResult<()> {
     let mut con = create_connection()?;
 
     // 操作示例

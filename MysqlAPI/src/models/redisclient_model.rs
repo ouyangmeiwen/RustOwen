@@ -1,5 +1,4 @@
-use deadpool_redis::{Config, Pool};
-use redis::AsyncCommands;
+use deadpool_redis::Pool;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 

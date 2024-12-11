@@ -16,11 +16,11 @@ use middlewares::jwt::JwtMiddleware;
 use models::appstate_model::AppState;
 use models::redisclient_model::RedisClient;
 use sqlx::{mysql::MySqlPoolOptions, MySql, Pool}; // 使用 MySql // 引用 handler 模块
-use test::rusttest;
+use test::rust_test;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    rusttest::runtest();
+    rust_test::Test();
     dotenv().ok();
     let config: Config = Config::new();
     let log_level = config.log_level.clone(); // 获取日志级别配置

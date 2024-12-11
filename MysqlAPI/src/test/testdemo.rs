@@ -151,21 +151,7 @@ fn id_in_results(items: &Vec<i32>, id: i32) -> Result<i32, String> {
         Err((&"NoteFoud").to_string())
     }
 }
-
-pub fn runtest() {
-    runtest1();
-    runtest2();
-    runtest3();
-    runtest4();
-    runtest5();
-    runtest6();
-    runprintln();
-    runmove();
-    runmove2();
-    runcopy();
-    runborrow();
-    runclone();
-
+fn test_optinal() {
     match find_item(1) {
         Some(item) => println!("Found: {}", item),
         None => println!("Item not found"),
@@ -252,5 +238,20 @@ pub fn runtest() {
             &-1 // 返回默认值
         })
     );
-    let _ = redistest::testRedis();
+}
+pub fn test_rust() {
+    runtest1();
+    runtest2();
+    runtest3();
+    runtest4();
+    runtest5();
+    runtest6();
+    runprintln();
+    runmove();
+    runmove2();
+    runcopy();
+    runborrow();
+    runclone();
+    test_optinal();
+    //let _ = redistest::testRedis();
 }

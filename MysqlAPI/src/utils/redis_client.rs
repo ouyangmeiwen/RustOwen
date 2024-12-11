@@ -1,11 +1,6 @@
 use crate::models::redisclient_model::RedisClient;
-use actix_web::body::None;
-use deadpool_redis::redis::aio::PubSub;
 use deadpool_redis::redis::AsyncCommands;
-use deadpool_redis::{Config, Connection};
-use futures::future::ok;
-use futures::stream::StreamExt;
-use redis::AsyncCommands as RedisAsyncCommands; // Alias to avoid naming conflicts
+use deadpool_redis::Config;
 use std::sync::Arc;
 use tokio::sync::Mutex; // Import StreamExt to use `.next()`
 impl RedisClient {

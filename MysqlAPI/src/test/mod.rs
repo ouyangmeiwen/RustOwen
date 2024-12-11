@@ -1,2 +1,3 @@
 pub mod redistest;
-pub mod rusttest;
+pub mod rust_test;
+pub mod testdemo;
