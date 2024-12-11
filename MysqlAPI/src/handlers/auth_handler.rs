@@ -28,7 +28,7 @@ pub async fn generate_token_handler(
                 Ok(_) => (),
                 Err(e) => (),
             }
-            RedisClient::close_connection(&redis_client);
+            // RedisClient::close_connection(&redis_client);
             return HttpResponse::Ok().json(TokenResponse { token });
         }
         Err(_) => HttpResponse::InternalServerError().json(json!({
