@@ -27,10 +27,7 @@ fn read_excel(file_path: &str) -> Result<(), Box<dyn std::error::Error>> {
     }
     // Code after the time-measured block
     let duration = start.elapsed();
-    println!(
-        "Time taken for the block: {} milliseconds",
-        duration.as_secs()
-    );
+    println!("Time taken for the block: {} seconds", duration.as_secs());
     Ok(())
 }
 
