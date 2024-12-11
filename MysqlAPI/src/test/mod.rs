@@ -1,3 +1,4 @@
+pub mod jsontest;
 pub mod redistest;
-pub mod rust_test;
 pub mod testdemo;
+pub mod testindex;
