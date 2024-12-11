@@ -15,11 +15,18 @@ use dotenv::dotenv;
 use middlewares::jwt::JwtMiddleware;
 use sqlx::{mysql::MySqlPoolOptions, MySql, Pool}; // 使用 MySql // 引用 handler 模块
 use test::rusttest;
+use utils::redis_client::RedisClient;
 
 pub struct AppState {
-    db: Pool<MySql>, // 将 Pool<Postgres> 改为 Pool<MySql>
+    db: Pool<MySql>,           // 将 Pool<Postgres> 改为 Pool<MySql>
+    redis_client: RedisClient, // Redis 客户端
 }
 
+impl AppState {
+    pub fn new(db: Pool<MySql>, redis_client: RedisClient) -> Self {
+        AppState { db, redis_client }
+    }
+}
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     rusttest::runtest();
@@ -52,6 +59,10 @@ async fn main() -> std::io::Result<()> {
 
     println!("start http service:http://127.0.0.1:{}", port); // 使用 format! 或 {} 来插入变量
 
+    let redis_client = RedisClient::new(&config.redis_url)
+        .await
+        .expect("Failed to initialize Redis client");
+
     HttpServer::new(move || {
         let cors: Cors = Cors::default()
             .allowed_origin(&config.cors_allowed_origin) // 直接使用 config
@@ -63,7 +74,10 @@ async fn main() -> std::io::Result<()> {
             ])
             .supports_credentials();
         App::new()
-            .app_data(web::Data::new(AppState { db: pool.clone() }))
+            .app_data(web::Data::new(AppState {
+                db: pool.clone(),
+                redis_client: redis_client.clone(),
+            }))
             .configure(web_handler::config)
             .wrap(cors)
             .wrap(Logger::default())

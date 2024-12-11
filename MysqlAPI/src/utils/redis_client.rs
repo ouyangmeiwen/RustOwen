@@ -18,10 +18,10 @@ impl Clone for RedisClient {
         }
     }
 }
-// 创建全局 RedisClient 单例实例
-pub static REDIS_CLIENT: Lazy<Arc<Mutex<Option<RedisClient>>>> = Lazy::new(|| {
-    Arc::new(Mutex::new(None)) // 初始为空
-});
+// // 创建全局 RedisClient 单例实例
+// pub static REDIS_CLIENT: Lazy<Arc<Mutex<Option<RedisClient>>>> = Lazy::new(|| {
+//     Arc::new(Mutex::new(None)) // 初始为空
+// });
 
 impl RedisClient {
     // 创建一个新的 RedisClient 实例
@@ -34,32 +34,32 @@ impl RedisClient {
             pool,
         })
     }
-    // 使用默认配置创建 RedisClient 实例
-    pub async fn default() -> Result<Self, String> {
-        let config: Config = Config::new();
-        let redis_url = &config.redis_url;
+    // // 使用默认配置创建 RedisClient 实例
+    // pub async fn default() -> Result<Self, String> {
+    //     let config: Config = Config::new();
+    //     let redis_url = &config.redis_url;
 
-        // 获取 REDIS_CLIENT 的锁
-        let mut redis_client_guard = REDIS_CLIENT.lock().await;
+    //     // 获取 REDIS_CLIENT 的锁
+    //     let mut redis_client_guard = REDIS_CLIENT.lock().await;
 
-        // 如果 REDIS_CLIENT 已经存在，复用已有的 RedisClient
-        if let Some(ref client) = *redis_client_guard {
-            // 如果连接池为空，创建连接
-            return Ok(client.clone());
-        }
-        // 如果 REDIS_CLIENT 不存在，创建新的实例
-        let client = Client::open(redis_url.to_string())
-            .map_err(|e| format!("Failed to create Redis client: {:?}", e))?;
+    //     // 如果 REDIS_CLIENT 已经存在，复用已有的 RedisClient
+    //     if let Some(ref client) = *redis_client_guard {
+    //         // 如果连接池为空，创建连接
+    //         return Ok(client.clone());
+    //     }
+    //     // 如果 REDIS_CLIENT 不存在，创建新的实例
+    //     let client = Client::open(redis_url.to_string())
+    //         .map_err(|e| format!("Failed to create Redis client: {:?}", e))?;
 
-        let pool = Arc::new(Mutex::new(None)); // 初始为空
-        let new_client = RedisClient {
-            client: Arc::new(Mutex::new(client)),
-            pool,
-        };
-        // 更新 REDIS_CLIENT 单例，保存新的 RedisClient 实例
-        *redis_client_guard = Some(new_client.clone()); // 使用 Arc::clone 来共享实例
-        Ok(new_client)
-    }
+    //     let pool = Arc::new(Mutex::new(None)); // 初始为空
+    //     let new_client = RedisClient {
+    //         client: Arc::new(Mutex::new(client)),
+    //         pool,
+    //     };
+    //     // 更新 REDIS_CLIENT 单例，保存新的 RedisClient 实例
+    //     *redis_client_guard = Some(new_client.clone()); // 使用 Arc::clone 来共享实例
+    //     Ok(new_client)
+    // }
 
     // 获取 Redis 连接池中的连接
     pub async fn get_connection(&self) -> RedisResult<redis::aio::Connection> {

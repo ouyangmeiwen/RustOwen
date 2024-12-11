@@ -1,4 +1,5 @@
 use crate::utils::redis_client::RedisClient;
+use crate::AppState;
 use crate::{
     models::claims_model::Claims, models::claims_model::TokenRequest,
     models::claims_model::TokenResponse, utils::jwt_utils::create_jwt,
@@ -11,6 +12,7 @@ use serde_json::json;
 #[post("/token")]
 pub async fn generate_token_handler(
     body: web::Json<TokenRequest>, // 通过请求体接收 user_id
+    data: web::Data<AppState>,
 ) -> impl Responder {
     let user_id = body.user_id.clone(); // 从请求体中提取 user_id
 
@@ -22,7 +24,7 @@ pub async fn generate_token_handler(
     match create_jwt(&my_claims) {
         Ok(token) => {
             // 初始化 Redis 客户端
-            let redis_client = RedisClient::default().await.unwrap();
+            let redis_client = &data.redis_client;
             // 确保 `set` 方法返回的是 `Result<(), String>` 类型，否则你需要做额外的错误处理
             match redis_client.set(&user_id, &token).await {
                 Ok(_) => (),
@@ -45,6 +47,7 @@ pub async fn generate_token_handler(
 #[get("/tokenget")]
 pub async fn generate_token_get_handler(
     body: web::Query<TokenRequest>, // 通过请求体接收 user_id
+    data: web::Data<AppState>,
 ) -> impl Responder {
     let user_id = body.user_id.clone(); // 从请求体中提取 user_id
 
@@ -56,7 +59,7 @@ pub async fn generate_token_get_handler(
     match create_jwt(&my_claims) {
         Ok(token) => {
             // 初始化 Redis 客户端
-            let redis_client = RedisClient::default().await.unwrap();
+            let redis_client = &data.redis_client;
             // 确保 `set` 方法返回的是 `Result<(), String>` 类型，否则你需要做额外的错误处理
             match redis_client.set(&user_id, &token).await {
                 Ok(_) => (),
