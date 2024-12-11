@@ -27,7 +27,7 @@ pub async fn generate_token_handler(
             // 确保 `set` 方法返回的是 `Result<(), String>` 类型，否则你需要做额外的错误处理
             redis_client.set(&user_id, &token).await.unwrap_or(());
             redis_client
-                .expire(&user_id, (24 * 3600) as i64)
+                .expire(&user_id, (24 * 3600) as usize)
                 .await
                 .unwrap_or(());
             return HttpResponse::Ok().json(TokenResponse { token });
@@ -59,7 +59,7 @@ pub async fn generate_token_get_handler(
             // 确保 `set` 方法返回的是 `Result<(), String>` 类型，否则你需要做额外的错误处理
             redis_client.set(&user_id, &token).await.unwrap_or(());
             redis_client
-                .expire(&user_id, (24 * 3600) as i64)
+                .expire(&user_id, (24 * 3600) as usize)
                 .await
                 .unwrap_or(());
             return HttpResponse::Ok().json(TokenResponse { token });

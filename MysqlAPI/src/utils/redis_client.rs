@@ -1,77 +1,127 @@
-use crate::configs::envconfig::Config;
 use crate::models::redisclient_model::RedisClient;
-use once_cell::sync::Lazy; // 导入 Lazy
-use redis::aio::Connection;
-use redis::{AsyncCommands, Client, RedisResult};
+use actix_web::body::None;
+use deadpool_redis::redis::AsyncCommands;
+use deadpool_redis::{Config, Connection};
+use redis::AsyncCommands as RedisAsyncCommands; // Alias to avoid naming conflicts
 use std::sync::Arc;
 use tokio::sync::Mutex;
-
-// // 创建全局 RedisClient 单例实例
-// pub static REDIS_CLIENT: Lazy<Arc<Mutex<Option<RedisClient>>>> = Lazy::new(|| {
-//     Arc::new(Mutex::new(None)) // 初始为空
-// });
-
 impl RedisClient {
-    // 创建一个新的 RedisClient 实例
     pub async fn new(redis_url: &str) -> Result<Self, String> {
-        let client = Client::open(redis_url)
-            .map_err(|e| format!("Failed to create Redis client: {:?}", e))?;
-        let pool = Arc::new(Mutex::new(None)); // 初始为空，可以根据需求初始化连接池
+        let config = Config::from_url(redis_url);
+        let pool = config
+            .create_pool(None)
+            .map_err(|e| format!("Failed to create Redis pool: {:?}", e))?;
         Ok(RedisClient {
-            client: Arc::new(Mutex::new(client)),
-            pool,
+            pool: Arc::new(Mutex::new(pool)),
         })
     }
-    // // 使用默认配置创建 RedisClient 实例
-    // pub async fn default() -> Result<Self, String> {
-    //     let config: Config = Config::new();
-    //     let redis_url = &config.redis_url;
+    pub async fn get_connection(&self) -> Result<deadpool_redis::Connection, String> {
+        let pool_lock = self.pool.lock().await;
+        let conn = pool_lock
+            .get()
+            .await
+            .map_err(|e| format!("Failed to get connection: {:?}", e))?;
+        Ok(conn)
+    }
+    // 删除多个键
+    pub async fn mdel(&self, keys: Vec<&str>) -> Result<(), String> {
+        let mut con = self
+            .get_connection()
+            .await
+            .map_err(|e| format!("Redis connection error: {:?}", e))?;
 
-    //     // 获取 REDIS_CLIENT 的锁
-    //     let mut redis_client_guard = REDIS_CLIENT.lock().await;
+        con.del(keys)
+            .await
+            .map_err(|e| format!("Failed to delete keys from Redis: {:?}", e))?;
 
-    //     // 如果 REDIS_CLIENT 已经存在，复用已有的 RedisClient
-    //     if let Some(ref client) = *redis_client_guard {
-    //         // 如果连接池为空，创建连接
-    //         return Ok(client.clone());
-    //     }
-    //     // 如果 REDIS_CLIENT 不存在，创建新的实例
-    //     let client = Client::open(redis_url.to_string())
-    //         .map_err(|e| format!("Failed to create Redis client: {:?}", e))?;
+        Ok(())
+    }
+    // 删除键并设置过期时间
+    pub async fn del_and_expire(&self, key: &str, expire_seconds: usize) -> Result<(), String> {
+        let mut con = self
+            .get_connection()
+            .await
+            .map_err(|e| format!("Redis connection error: {:?}", e))?;
 
-    //     let pool = Arc::new(Mutex::new(None)); // 初始为空
-    //     let new_client = RedisClient {
-    //         client: Arc::new(Mutex::new(client)),
-    //         pool,
-    //     };
-    //     // 更新 REDIS_CLIENT 单例，保存新的 RedisClient 实例
-    //     *redis_client_guard = Some(new_client.clone()); // 使用 Arc::clone 来共享实例
-    //     Ok(new_client)
-    // }
+        // 删除键
+        con.del(key)
+            .await
+            .map_err(|e| format!("Failed to delete key from Redis: {:?}", e))?;
 
-    // 获取 Redis 连接池中的连接
-    pub async fn get_connection(&self) -> RedisResult<redis::aio::Connection> {
-        let mut pool_lock = self.pool.lock().await;
+        // 设置过期时间
+        con.expire(key, expire_seconds)
+            .await
+            .map_err(|e| format!("Failed to set expiration for key in Redis: {:?}", e))?;
 
-        // 如果池中没有连接，创建一个新的连接并存储在池中
-        if pool_lock.is_none() {
-            let client_lock = self.client.lock().await;
-            let con = client_lock.get_async_connection().await?;
-            *pool_lock = Some(con);
+        Ok(())
+    }
+    // 删除多个键并设置过期时间
+    pub async fn mdel_and_expire(
+        &self,
+        keys: Vec<&str>,
+        expire_seconds: usize,
+    ) -> Result<(), String> {
+        let mut con = self
+            .get_connection()
+            .await
+            .map_err(|e| format!("Redis connection error: {:?}", e))?;
+
+        // 删除多个键
+        con.del(keys.clone())
+            .await
+            .map_err(|e| format!("Failed to delete keys from Redis: {:?}", e))?;
+
+        // 设置过期时间
+        for key in keys.clone() {
+            con.expire(key, expire_seconds)
+                .await
+                .map_err(|e| format!("Failed to set expiration for key in Redis: {:?}", e))?;
         }
 
-        // 返回连接池中的连接
-        pool_lock.take().ok_or_else(|| {
-            redis::RedisError::from((redis::ErrorKind::IoError, "Connection pool is empty"))
-        })
+        Ok(())
+    }
+    // 删除键
+    pub async fn del(&self, key: &str) -> Result<(), String> {
+        let mut con = self
+            .get_connection()
+            .await
+            .map_err(|e| format!("Redis connection error: {:?}", e))?;
+
+        // 使用 AsyncCommands trait 执行 DEL 命令
+        con.del(key)
+            .await
+            .map_err(|e| format!("Failed to delete key from Redis: {:?}", e))?;
+
+        Ok(())
+    }
+    // 设置键的过期时间（秒）
+    pub async fn expire(&self, key: &str, expire_seconds: usize) -> Result<(), String> {
+        let mut con = self
+            .get_connection()
+            .await
+            .map_err(|e| format!("Redis connection error: {:?}", e))?;
+
+        // 使用 AsyncCommands trait 执行 EXPIRE 命令
+        con.expire(key, expire_seconds)
+            .await
+            .map_err(|e| format!("Failed to set expiration for key in Redis: {:?}", e))?;
+
+        Ok(())
+    }
+    // 检查键是否存在
+    pub async fn exists(&self, key: &str) -> Result<bool, String> {
+        let mut con = self
+            .get_connection()
+            .await
+            .map_err(|e| format!("Redis connection error: {:?}", e))?;
+
+        // 使用 AsyncCommands trait 执行 EXISTS 命令
+        con.exists(key)
+            .await
+            .map_err(|e| format!("Failed to check key existence in Redis: {:?}", e))
     }
 
-    // 关闭连接池并释放连接
-    pub async fn close_connection(&self) {
-        let mut pool_lock = self.pool.lock().await;
-        *pool_lock = None; // 将连接池设置为空
-    }
-    // 设置 Redis 键值对
+    // 设置值
     pub async fn set(&self, key: &str, value: &str) -> Result<(), String> {
         let mut con = self
             .get_connection()
@@ -83,7 +133,7 @@ impl RedisClient {
         Ok(())
     }
 
-    // 获取 Redis 键值
+    // 获取值
     pub async fn get(&self, key: &str) -> Result<String, String> {
         let mut con = self
             .get_connection()
@@ -94,65 +144,64 @@ impl RedisClient {
             .map_err(|e| format!("Failed to get key from Redis: {:?}", e))
     }
 
-    // 删除 Redis 键
-    pub async fn del(&self, key: &str) -> Result<(), String> {
+    // 自增
+    pub async fn incr(&self, key: &str) -> Result<i64, String> {
         let mut con = self
             .get_connection()
             .await
             .map_err(|e| format!("Redis connection error: {:?}", e))?;
-        con.del(key)
+        con.incr(key, 1)
             .await
-            .map_err(|e| format!("Failed to delete key from Redis: {:?}", e))?;
-        Ok(())
+            .map_err(|e| format!("Failed to increment key in Redis: {:?}", e))
     }
 
-    // 设置 Redis 键的过期时间
-    pub async fn expire(&self, key: &str, expire_seconds: i64) -> Result<(), String> {
+    // 自减
+    pub async fn decr(&self, key: &str) -> Result<i64, String> {
         let mut con = self
             .get_connection()
             .await
             .map_err(|e| format!("Redis connection error: {:?}", e))?;
-        con.expire(key, expire_seconds)
+        con.decr(key, 1)
             .await
-            .map_err(|e| format!("Failed to set expiration for key in Redis: {:?}", e))?;
-        Ok(())
+            .map_err(|e| format!("Failed to decrement key in Redis: {:?}", e))
     }
 
-    // 检查 Redis 中是否存在某个键
-    pub async fn exists(&self, key: &str) -> Result<bool, String> {
-        let mut con = self
-            .get_connection()
-            .await
-            .map_err(|e| format!("Redis connection error: {:?}", e))?;
-        con.exists(key)
-            .await
-            .map_err(|e| format!("Failed to check key existence in Redis: {:?}", e))
-    }
+    // // 设置多个键值
+    // pub async fn mset(&self, key_value_pairs: Vec<(&str, &str)>) -> Result<(), String> {
+    //     let mut con = self
+    //         .get_connection()
+    //         .await
+    //         .map_err(|e| format!("Redis connection error: {:?}", e))?;
+    //     let pairs: Vec<(&str, &str)> = key_value_pairs.iter().map(|&(k, v)| (k, v)).collect();
+    //     con.mset(pairs)
+    //         .await
+    //         .map_err(|e| format!("Failed to set multiple keys in Redis: {:?}", e))?;
+    //     Ok(())
+    // }
 
-    // 设置 Redis 键值对并设置过期时间
-    pub async fn set_ex(&self, key: &str, value: &str, expire_seconds: u64) -> Result<(), String> {
-        let mut con = self
-            .get_connection()
-            .await
-            .map_err(|e| format!("Redis connection error: {:?}", e))?;
-        con.set_ex(key, value, expire_seconds)
-            .await
-            .map_err(|e| format!("Failed to set key with expiration in Redis: {:?}", e))?;
-        Ok(())
-    }
+    // // 获取多个键值
+    // pub async fn mget(&self, keys: Vec<&str>) -> Result<Vec<Option<String>>, String> {
+    //     let mut con = self
+    //         .get_connection()
+    //         .await
+    //         .map_err(|e| format!("Redis connection error: {:?}", e))?;
+    //     con.mget(keys)
+    //         .await
+    //         .map_err(|e| format!("Failed to get multiple keys from Redis: {:?}", e))
+    // }
 
-    // 获取 Redis 键的过期时间
-    pub async fn ttl(&self, key: &str) -> Result<i64, String> {
-        let mut con = self
-            .get_connection()
-            .await
-            .map_err(|e| format!("Redis connection error: {:?}", e))?;
-        con.ttl(key)
-            .await
-            .map_err(|e| format!("Failed to get TTL for key in Redis: {:?}", e))
-    }
+    // // 仅在键不存在时设置值
+    // pub async fn setnx(&self, key: &str, value: &str) -> Result<bool, String> {
+    //     let mut con = self
+    //         .get_connection()
+    //         .await
+    //         .map_err(|e| format!("Redis connection error: {:?}", e))?;
+    //     con.setnx(key, value)
+    //         .await
+    //         .map_err(|e| format!("Failed to set key if not exists in Redis: {:?}", e))
+    // }
 
-    // 哈希表操作
+    // 设置哈希表字段
     pub async fn hset(&self, hash_key: &str, field: &str, value: &str) -> Result<(), String> {
         let mut con = self
             .get_connection()
@@ -164,7 +213,7 @@ impl RedisClient {
         Ok(())
     }
 
-    // 获取 Redis 哈希表字段
+    // 获取哈希表字段
     pub async fn hget(&self, hash_key: &str, field: &str) -> Result<String, String> {
         let mut con = self
             .get_connection()
@@ -175,7 +224,30 @@ impl RedisClient {
             .map_err(|e| format!("Failed to get field from hash: {:?}", e))
     }
 
-    // 删除 Redis 哈希表字段
+    // 获取哈希表所有字段及值
+    pub async fn hgetall(&self, hash_key: &str) -> Result<Vec<(String, String)>, String> {
+        let mut con = self
+            .get_connection()
+            .await
+            .map_err(|e| format!("Redis connection error: {:?}", e))?;
+        con.hgetall(hash_key)
+            .await
+            .map_err(|e| format!("Failed to get all fields from hash: {:?}", e))
+    }
+    // 删除哈希表中的多个字段
+    pub async fn hmdel(&self, hash_key: &str, fields: Vec<&str>) -> Result<(), String> {
+        let mut con = self
+            .get_connection()
+            .await
+            .map_err(|e| format!("Redis connection error: {:?}", e))?;
+
+        con.hdel(hash_key, fields)
+            .await
+            .map_err(|e| format!("Failed to delete fields from hash: {:?}", e))?;
+
+        Ok(())
+    }
+    // 移除哈希表字段
     pub async fn hdel(&self, hash_key: &str, field: &str) -> Result<(), String> {
         let mut con = self
             .get_connection()
@@ -187,32 +259,42 @@ impl RedisClient {
         Ok(())
     }
 
-    // 获取 Redis 哈希表所有字段和值
-    pub async fn hgetall(&self, hash_key: &str) -> Result<Vec<(String, String)>, String> {
+    // 判断哈希表是否存在某个字段
+    pub async fn hexists(&self, hash_key: &str, field: &str) -> Result<bool, String> {
         let mut con = self
             .get_connection()
             .await
             .map_err(|e| format!("Redis connection error: {:?}", e))?;
-        con.hgetall(hash_key)
+        con.hexists(hash_key, field)
             .await
-            .map_err(|e| format!("Failed to get all fields from hash: {:?}", e))
+            .map_err(|e| format!("Failed to check field existence in hash: {:?}", e))
     }
 
-    // 设置 Redis 列表
+    // 从左侧插入值
     pub async fn lpush(&self, list_key: &str, values: Vec<String>) -> Result<(), String> {
         let mut con = self
             .get_connection()
             .await
             .map_err(|e| format!("Redis connection error: {:?}", e))?;
-        for value in values {
-            con.lpush(list_key, value)
-                .await
-                .map_err(|e| format!("Failed to push value to list: {:?}", e))?;
-        }
+        con.lpush(list_key, values)
+            .await
+            .map_err(|e| format!("Failed to push value to list (left): {:?}", e))?;
         Ok(())
     }
 
-    // 获取 Redis 列表中的所有元素
+    // 从右侧插入值
+    pub async fn rpush(&self, list_key: &str, values: Vec<String>) -> Result<(), String> {
+        let mut con = self
+            .get_connection()
+            .await
+            .map_err(|e| format!("Redis connection error: {:?}", e))?;
+        con.rpush(list_key, values)
+            .await
+            .map_err(|e| format!("Failed to push value to list (right): {:?}", e))?;
+        Ok(())
+    }
+
+    // 获取列表中的所有元素
     pub async fn lrange(
         &self,
         list_key: &str,
@@ -228,7 +310,18 @@ impl RedisClient {
             .map_err(|e| format!("Failed to get values from list: {:?}", e))
     }
 
-    // 从 Redis 列表中移除并返回左侧的元素
+    // 获取列表的长度
+    pub async fn llen(&self, list_key: &str) -> Result<i64, String> {
+        let mut con = self
+            .get_connection()
+            .await
+            .map_err(|e| format!("Redis connection error: {:?}", e))?;
+        con.llen(list_key)
+            .await
+            .map_err(|e| format!("Failed to get list length: {:?}", e))
+    }
+
+    // 从左侧弹出值
     pub async fn lpop(&self, list_key: &str) -> Result<String, String> {
         let mut con = self
             .get_connection()
@@ -236,10 +329,10 @@ impl RedisClient {
             .map_err(|e| format!("Redis connection error: {:?}", e))?;
         con.lpop(list_key, None)
             .await
-            .map_err(|e| format!("Failed to pop value from list: {:?}", e))
+            .map_err(|e| format!("Failed to pop value from list (left): {:?}", e))
     }
 
-    // 从 Redis 列表中移除并返回右侧的元素
+    // 从右侧弹出值
     pub async fn rpop(&self, list_key: &str) -> Result<String, String> {
         let mut con = self
             .get_connection()
@@ -247,38 +340,22 @@ impl RedisClient {
             .map_err(|e| format!("Redis connection error: {:?}", e))?;
         con.rpop(list_key, None)
             .await
-            .map_err(|e| format!("Failed to pop value from list: {:?}", e))
+            .map_err(|e| format!("Failed to pop value from list (right): {:?}", e))
     }
 
-    // 设置 Redis 集合
+    // 添加元素到集合
     pub async fn sadd(&self, set_key: &str, values: Vec<String>) -> Result<(), String> {
         let mut con = self
             .get_connection()
             .await
             .map_err(|e| format!("Redis connection error: {:?}", e))?;
-        for value in values {
-            con.sadd(set_key, value)
-                .await
-                .map_err(|e| format!("Failed to add value to set: {:?}", e))?;
-        }
-        Ok(())
-    }
-
-    // 移除 Redis 集合中的成员
-    pub async fn srem(&self, set_key: &str, values: Vec<String>) -> Result<(), String> {
-        let mut con = self
-            .get_connection()
+        con.sadd(set_key, values)
             .await
-            .map_err(|e| format!("Redis connection error: {:?}", e))?;
-        for value in values {
-            con.srem(set_key, value)
-                .await
-                .map_err(|e| format!("Failed to remove value from set: {:?}", e))?;
-        }
+            .map_err(|e| format!("Failed to add value to set: {:?}", e))?;
         Ok(())
     }
 
-    // 获取 Redis 集合中的所有成员
+    // 获取集合的成员
     pub async fn smembers(&self, set_key: &str) -> Result<Vec<String>, String> {
         let mut con = self
             .get_connection()
@@ -286,6 +363,174 @@ impl RedisClient {
             .map_err(|e| format!("Redis connection error: {:?}", e))?;
         con.smembers(set_key)
             .await
-            .map_err(|e| format!("Failed to get values from set: {:?}", e))
+            .map_err(|e| format!("Failed to get members of set: {:?}", e))
+    }
+
+    // 从集合中移除元素
+    pub async fn srem(&self, set_key: &str, values: Vec<String>) -> Result<(), String> {
+        let mut con = self
+            .get_connection()
+            .await
+            .map_err(|e| format!("Redis connection error: {:?}", e))?;
+        con.srem(set_key, values)
+            .await
+            .map_err(|e| format!("Failed to remove value from set: {:?}", e))?;
+        Ok(())
+    }
+
+    // 判断元素是否在集合中
+    pub async fn sismember(&self, set_key: &str, value: &str) -> Result<bool, String> {
+        let mut con = self
+            .get_connection()
+            .await
+            .map_err(|e| format!("Redis connection error: {:?}", e))?;
+        con.sismember(set_key, value)
+            .await
+            .map_err(|e| format!("Failed to check member in set: {:?}", e))
+    }
+
+    // 获取集合的成员数
+    pub async fn scard(&self, set_key: &str) -> Result<i64, String> {
+        let mut con = self
+            .get_connection()
+            .await
+            .map_err(|e| format!("Redis connection error: {:?}", e))?;
+        con.scard(set_key)
+            .await
+            .map_err(|e| format!("Failed to get set cardinality: {:?}", e))
+    }
+    // 获取键的过期时间（TTL）
+    pub async fn ttl(&self, key: &str) -> Result<i64, String> {
+        let mut con = self
+            .get_connection()
+            .await
+            .map_err(|e| format!("Redis connection error: {:?}", e))?;
+
+        con.ttl(key)
+            .await
+            .map_err(|e| format!("Failed to get TTL for key in Redis: {:?}", e))
+    }
+    // 向有序集合中添加元素
+    pub async fn zadd(&self, zset_key: &str, score: f64, value: &str) -> Result<(), String> {
+        let mut con = self
+            .get_connection()
+            .await
+            .map_err(|e| format!("Redis connection error: {:?}", e))?;
+
+        con.zadd(zset_key, value, score)
+            .await
+            .map_err(|e| format!("Failed to add element to sorted set: {:?}", e))?;
+
+        Ok(())
+    }
+    // 获取有序集合中的元素（按分数排序）
+    pub async fn zrange(
+        &self,
+        zset_key: &str,
+        start: isize,
+        stop: isize,
+    ) -> Result<Vec<String>, String> {
+        let mut con = self
+            .get_connection()
+            .await
+            .map_err(|e| format!("Redis connection error: {:?}", e))?;
+
+        con.zrange(zset_key, start, stop)
+            .await
+            .map_err(|e| format!("Failed to get elements from sorted set: {:?}", e))
+    }
+    // 获取有序集合元素的分数
+    pub async fn zscore(&self, zset_key: &str, value: &str) -> Result<Option<f64>, String> {
+        let mut con = self
+            .get_connection()
+            .await
+            .map_err(|e| format!("Redis connection error: {:?}", e))?;
+
+        con.zscore(zset_key, value)
+            .await
+            .map_err(|e| format!("Failed to get score for element from sorted set: {:?}", e))
+    }
+    // 发布消息到频道
+    pub async fn publish(&self, channel: &str, message: &str) -> Result<(), String> {
+        let mut con = self
+            .get_connection()
+            .await
+            .map_err(|e| format!("Redis connection error: {:?}", e))?;
+
+        con.publish(channel, message)
+            .await
+            .map_err(|e| format!("Failed to publish message to Redis channel: {:?}", e))?;
+
+        Ok(())
+    }
+    // 订阅频道
+    pub async fn subscribe(&self, channels: Vec<&str>) -> Result<(), String> {
+        Ok(())
+    }
+
+    // 获取分布式锁
+    pub async fn lock(
+        &self,
+        lock_key: &str,
+        lock_value: &str,
+        ttl_seconds: usize,
+    ) -> Result<bool, String> {
+        let mut con = self
+            .get_connection()
+            .await
+            .map_err(|e| format!("Redis connection error: {:?}", e))?;
+
+        // 使用 SETNX 设置锁，只有在键不存在时才成功
+        let result: i32 = con
+            .set_nx(lock_key, lock_value)
+            .await
+            .map_err(|e| format!("Failed to acquire lock: {:?}", e))?;
+
+        if result == 1 {
+            // 锁成功，设置过期时间
+            con.expire(lock_key, ttl_seconds)
+                .await
+                .map_err(|e| format!("Failed to set lock expiration: {:?}", e))?;
+            Ok(true)
+        } else {
+            // 锁失败
+            Ok(false)
+        }
+    }
+
+    // 释放锁
+    pub async fn unlock(&self, lock_key: &str, lock_value: &str) -> Result<(), String> {
+        Ok(())
+        //         // Get a connection from the pool
+        //         let mut con = self
+        //             .get_connection()
+        //             .await
+        //             .map_err(|e| format!("Redis connection error: {:?}", e))?;
+
+        //         // Lua script to ensure only the holder of the lock can release it
+        //         let script = r#"
+        //     if redis.call('get', KEYS[1]) == ARGV[1] then
+        //         return redis.call('del', KEYS[1])
+        //     else
+        //         return 0
+        //     end
+        // "#;
+
+        //         // Use the `cmd` method to execute the Lua script with `eval`
+        //         let result: i32 = con
+        //             .cmd("eval")
+        //             .arg(script)
+        //             .arg(1) // KEYS length (number of keys)
+        //             .arg(lock_key) // The lock key
+        //             .arg(lock_value) // The lock value
+        //             .query_async(&mut con)
+        //             .await
+        //             .map_err(|e| format!("Failed to release lock: {:?}", e))?;
+
+        //         if result == 1 {
+        //             Ok(())
+        //         } else {
+        //             Err("Failed to release lock: Lock is held by another client".into())
+        //         }
     }
 }
