@@ -56,7 +56,7 @@ async fn main() -> std::io::Result<()> {
         .await
         .expect("Failed to initialize Redis client");
 
-    let rabbitmquri = "amqp://owen:owen@localhost:5672/owenhost";
+    let rabbitmquri = "amqp://guest:guest@localhost:5672/owenhost";
     let exchange = "exchange_topic"; //接收者 发送这公用
     let queue: &str = "queue_my"; //接收者使用
                                   //let routing_key_send = "routing_key.key"; //发送者使用
