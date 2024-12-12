@@ -6,7 +6,7 @@ pub mod schemas;
 pub mod test;
 mod utils;
 
-use crate::handlers::web_handler;
+use crate::handlers::router_handler;
 use actix_cors::Cors;
 use actix_web::middleware::Logger;
 use actix_web::{http::header, web, App, HttpServer};
@@ -69,7 +69,7 @@ async fn main() -> std::io::Result<()> {
                 db: pool.clone(),
                 redis_client: redis_client.clone(),
             }))
-            .configure(web_handler::config)
+            .configure(router_handler::register)
             .wrap(cors)
             .wrap(Logger::default())
         //.wrap(JwtMiddleware) // 应用 JWT 中间件

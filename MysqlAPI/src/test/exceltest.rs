@@ -31,7 +31,7 @@ fn read_excel(file_path: &str) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-pub fn importExcle() {
+pub fn import_excle() {
     if let Err(e) = read_excel("D:\\20241020在架图书数据V4.xlsx") {
         eprintln!("Error reading the Excel file: {}", e);
     }

@@ -1,5 +1,5 @@
 use super::{
-    demotest::test_rust, exceltest::importExcle, jsontest::testjson, redistest::test_redis,
+    demotest::test_rust, exceltest::import_excle, jsontest::testjson, redistest::test_redis,
 };
 
 pub fn Test() {

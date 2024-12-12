@@ -12,7 +12,7 @@ async fn health_checker_handler() -> impl Responder {
 
     HttpResponse::Ok().json(json!({"status": "success","message": MESSAGE}))
 }
-pub fn config(conf: &mut web::ServiceConfig) {
+pub fn register(conf: &mut web::ServiceConfig) {
     let scope = web::scope("/api")
         .service(auth_handler::generate_token_handler)
         .service(auth_handler::generate_token_get_handler)
