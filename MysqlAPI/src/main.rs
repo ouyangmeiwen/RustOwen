@@ -14,10 +14,12 @@ use configs::envconfig::Config;
 use dotenv::dotenv;
 use middlewares::jwt::JwtMiddleware;
 use models::appstate_model::AppState;
+use models::rabbitmq_model::RabbitMQ;
 use models::redisclient_model::RedisClient;
 use sqlx::{mysql::MySqlPoolOptions, MySql, Pool}; // 使用 MySql // 引用 handler 模块
+use std::sync::Arc;
 use test::a_testdemo;
-
+use tokio::sync::mpsc; // 异步版的 mpsc
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     a_testdemo::Test();
@@ -54,6 +56,33 @@ async fn main() -> std::io::Result<()> {
         .await
         .expect("Failed to initialize Redis client");
 
+    let uri = "amqp://guest:guest@localhost:5672/";
+    let exchange = "topic_logs";
+    let queue = "my_queue";
+    let routing_key = "my.key";
+
+    // 创建 RabbitMQ 实例
+    // 创建 RabbitMQ 实例，并打印错误信息
+    let rabbitmq: Arc<RabbitMQ> = match RabbitMQ::new(uri).await {
+        Ok(rmq) => Arc::new(rmq),
+        Err(e) => {
+            eprintln!("Failed to connect to RabbitMQ: {}", e);
+            return Err(std::io::Error::new(std::io::ErrorKind::Other, e)); // 返回错误
+        }
+    };
+
+    // 设置消息通道，用于与后台任务通信
+    let (tx, mut rx) = mpsc::channel::<String>(100);
+    // 启动后台任务，开始消费消息
+    tokio::spawn({
+        let rabbitmq = rabbitmq.clone(); // 克隆 Arc
+        async move {
+            rabbitmq
+                .consume(exchange.clone(), queue.clone(), routing_key.clone(), tx)
+                .await
+                .unwrap();
+        }
+    });
     HttpServer::new(move || {
         let cors: Cors = Cors::default()
             .allowed_origin(&config.cors_allowed_origin) // 直接使用 config
@@ -68,6 +97,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(AppState {
                 db: pool.clone(),
                 redis_client: redis_client.clone(),
+                rabbitmq: rabbitmq.clone(),
             }))
             .configure(router_handler::config)
             .wrap(cors)
