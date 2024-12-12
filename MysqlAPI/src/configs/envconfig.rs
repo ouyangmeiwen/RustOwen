@@ -10,6 +10,12 @@ pub struct Config {
     pub max_connections: u32,
     pub log_level: String,
     pub redis_url: String,
+
+    pub rabbitmq_uri: String,
+    pub rabbitmq_exchange: String,
+    pub rabbitmq_queue: String,
+    pub rabbitmq_routing_key_send: String,
+    pub rabbitmq_routing_key_revceived: String,
 }
 
 impl Config {
@@ -32,7 +38,17 @@ impl Config {
             .expect("MAX_CONNECTIONS must be a valid u32");
 
         let log_level = env::var("LOG_LEVEL").expect("LOG_LEVEL must be set in .env file");
-        let redis_url = env::var("REDIS_URL").expect("LOG_LEVEL must be set in .env file");
+        let redis_url = env::var("REDIS_URL").expect("REDIS_URL must be set in .env file");
+
+        let rabbitmq_uri = env::var("RABBITMQ_URI").expect("RABBITMQ_URI must be set in .env file");
+        let rabbitmq_exchange =
+            env::var("RABBITMQ_EXCHANGE").expect("RABBITMQ_EXCHANGE must be set in .env file");
+        let rabbitmq_queue =
+            env::var("RABBITMQ_QUEUE").expect("RABBITMQ_QUEUE must be set in .env file");
+        let rabbitmq_routing_key_send = env::var("RABBITMQ_ROUTING_KEY_SEND")
+            .expect("RABBITMQ_ROUTING_KEY_SEND must be set in .env file");
+        let rabbitmq_routing_key_revceived = env::var("RABBITMQ_ROUTING_KEY_RECEIVED")
+            .expect("RABBITMQ_ROUTING_KEY_RECEIVED must be set in .env file");
 
         Config {
             database_url,
@@ -41,6 +57,11 @@ impl Config {
             max_connections,
             log_level,
             redis_url,
+            rabbitmq_uri,
+            rabbitmq_exchange,
+            rabbitmq_queue,
+            rabbitmq_routing_key_send,
+            rabbitmq_routing_key_revceived,
         }
     }
 }

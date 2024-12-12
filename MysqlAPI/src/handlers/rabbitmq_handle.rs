@@ -9,29 +9,39 @@ use actix_web::web::Json;
 use actix_web::{get, post, web, HttpResponse, Responder};
 use chrono::Utc;
 use serde_json::json;
-//http://127.0.0.1:7788/api/rabbitmq/send
-#[post("/rabbitmq/send")]
+//http://127.0.0.1:7788/api/rabbitmq/send?routing_key=routing_key.key&msg=11111
+#[get("/rabbitmq/send")]
 pub async fn sendmsg_rabbitmq_handle(
-    body: web::Json<RabbitMQMsgInput>, // 通过请求体接收 user_id
+    query: web::Query<RabbitMQMsgInput>, // 通过请求体接收 user_id
     data: web::Data<AppState>,
 ) -> impl Responder {
     let exchange: &str = "exchange_topic";
     // 发布者
-    match data
-        .rabbitmq
-        .publish(exchange, &body.routing_key, &body.msg)
-        .await
-    {
-        Ok(()) => {
-            // 成功处理
-            println!("Message published successfully.");
-            HttpResponse::Ok().json(ApiResponse::<()>::success(()))
+    match data.rabbitmq.as_ref() {
+        Some(rabbitmq) => {
+            match rabbitmq
+                .publish(exchange, &query.routing_key, &query.msg)
+                .await
+            {
+                Ok(()) => {
+                    // 成功处理
+                    println!("Message published successfully.");
+                    HttpResponse::Ok().json(ApiResponse::<()>::success(()))
+                }
+                Err(e) => {
+                    // 处理错误
+                    let error_message = format!("Failed to publish message: {}", e);
+                    eprintln!("{}", error_message);
+                    HttpResponse::InternalServerError()
+                        .json(ApiResponse::<()>::error(&error_message))
+                }
+            }
         }
-        Err(e) => {
-            // 处理错误
-            let error_message = format!("Failed to publish message: {}", e);
-            eprintln!("Failed to publish message: {}", e);
-            HttpResponse::InternalServerError().json(ApiResponse::<()>::error(&error_message))
+        None => {
+            // 处理 rabbitmq 为 None 的情况
+            let error_message = "RabbitMQ is not initialized";
+            eprintln!("{}", error_message);
+            HttpResponse::InternalServerError().json(ApiResponse::<()>::error(error_message))
         }
     }
 }

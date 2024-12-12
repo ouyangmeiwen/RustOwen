@@ -51,39 +51,40 @@ async fn main() -> std::io::Result<()> {
     };
 
     println!("start http service:http://127.0.0.1:{}", port); // 使用 format! 或 {} 来插入变量
-
     let redis_client = RedisClient::new(&config.redis_url)
         .await
         .expect("Failed to initialize Redis client");
 
-    let rabbitmquri = "amqp://guest:guest@localhost:5672/owenhost";
-    let exchange = "exchange_topic"; //接收者 发送这公用
-    let queue: &str = "queue_my"; //接收者使用
-                                  //let routing_key_send = "routing_key.key"; //发送者使用
-    let routing_key_revceived = "routing_key.*"; //接收者使用
-
-    // 创建 RabbitMQ 实例，并打印错误信息
-    let rabbitmq: Arc<RabbitMQ> = match RabbitMQ::new(rabbitmquri).await {
-        Ok(rmq) => Arc::new(rmq),
-        Err(e) => {
-            eprintln!("Failed to connect to RabbitMQ: {}", e);
-            return Err(std::io::Error::new(std::io::ErrorKind::Other, e)); // 返回错误
-        }
-    };
-
-    // 设置消息通道，用于与后台任务通信
-    let (tx, mut rx) = mpsc::channel::<String>(100);
-    // 启动后台任务，开始消费消息
-    tokio::spawn({
-        let rabbitmq = rabbitmq.clone(); // 克隆 Arc
-        async move {
-            rabbitmq
-                .consume(exchange, queue, routing_key_revceived, tx)
-                .await
-                .unwrap();
-        }
-    });
-
+    let mut rabbitmq_use: Option<Arc<RabbitMQ>> = None;
+    let rabbitmq_uri = &config.rabbitmq_uri;
+    if !rabbitmq_uri.clone().is_empty() {
+        // 创建 RabbitMQ 实例，并打印错误信息
+        let rabbitmq_new: Arc<RabbitMQ> = match RabbitMQ::new(rabbitmq_uri).await {
+            Ok(rmq) => Arc::new(rmq),
+            Err(e) => {
+                eprintln!("Failed to connect to RabbitMQ: {}", e);
+                return Err(std::io::Error::new(std::io::ErrorKind::Other, e)); // 返回错误
+            }
+        };
+        rabbitmq_use = Some(rabbitmq_new.clone());
+        // 设置消息通道，用于与后台任务通信
+        let (tx, mut rx) = mpsc::channel::<String>(100);
+        // 启动后台任务，开始消费消息
+        tokio::spawn({
+            let rabbitmq_consumer = rabbitmq_use.as_ref().unwrap().clone(); // 克隆 Arc
+            async move {
+                rabbitmq_consumer
+                    .consume(
+                        &config.rabbitmq_exchange,
+                        &config.rabbitmq_queue,
+                        &config.rabbitmq_routing_key_send,
+                        tx,
+                    )
+                    .await
+                    .unwrap();
+            }
+        });
+    }
     HttpServer::new(move || {
         let cors: Cors = Cors::default()
             .allowed_origin(&config.cors_allowed_origin) // 直接使用 config
@@ -98,7 +99,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(AppState {
                 db: pool.clone(),
                 redis_client: redis_client.clone(),
-                rabbitmq: rabbitmq.clone(),
+                rabbitmq: rabbitmq_use.clone(),
             }))
             .configure(router_handler::config)
             .wrap(cors)
