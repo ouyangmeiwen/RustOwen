@@ -1,3 +1,4 @@
+use crate::models::apiresponse_model::ApiResponse;
 use crate::models::appstate_model::AppState;
 use crate::{
     models::claims_model::Claims, models::claims_model::TokenRequest,
@@ -30,22 +31,25 @@ pub async fn generate_token_handler(
                 .expire(&user_id, (24 * 3600) as usize)
                 .await
                 .unwrap_or(());
-            return HttpResponse::Ok().json(TokenResponse { token });
+            //return HttpResponse::Ok().json(TokenResponse { token }); //分号则用reutrn，否则不用return
+            HttpResponse::Ok().json(TokenResponse { token }) //分号则用reutrn，否则不用return
         }
-        Err(_) => HttpResponse::InternalServerError().json(json!({
-            "status": "error",
-            "message": "Failed to generate token"
-        })),
+        // Err(_) => HttpResponse::InternalServerError().json(json!({
+        //     "status": "error",
+        //     "message": "Failed to generate token"
+        // })),
+        Err(_) => HttpResponse::InternalServerError()
+            .json(ApiResponse::<()>::error("Failed to generate token")),
     }
 }
 /// 生成 JWT 的 Handler
 //http://127.0.0.1:7788/api/tokenget?user_id=123
 #[get("/tokenget")]
 pub async fn generate_token_get_handler(
-    body: web::Query<TokenRequest>, // 通过请求体接收 user_id
+    query: web::Query<TokenRequest>, // 通过请求体接收 user_id
     data: web::Data<AppState>,
 ) -> impl Responder {
-    let user_id = body.user_id.clone(); // 从请求体中提取 user_id
+    let user_id = query.user_id.clone(); // 从请求体中提取 user_id
 
     let my_claims = Claims {
         user_id: user_id.clone(),
@@ -62,11 +66,14 @@ pub async fn generate_token_get_handler(
                 .expire(&user_id, (24 * 3600) as usize)
                 .await
                 .unwrap_or(());
-            return HttpResponse::Ok().json(TokenResponse { token });
+            //return HttpResponse::Ok().json(TokenResponse { token }); //分号则用reutrn，否则不用return
+            HttpResponse::Ok().json(TokenResponse { token }) //分号则用reutrn，否则不用return
         }
-        Err(_) => HttpResponse::InternalServerError().json(json!({
-            "status": "error",
-            "message": "Failed to generate token"
-        })),
+        // Err(_) => HttpResponse::InternalServerError().json(json!({
+        //     "status": "error",
+        //     "message": "Failed to generate token"
+        // })),
+        Err(_) => HttpResponse::InternalServerError()
+            .json(ApiResponse::<()>::error("Failed to generate token")),
     }
 }
