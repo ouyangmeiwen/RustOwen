@@ -5,26 +5,30 @@ pub mod models;
 pub mod schemas;
 pub mod test;
 mod utils;
-
 use crate::handlers::router_handler;
 use actix_cors::Cors;
 use actix_web::middleware::Logger;
 use actix_web::{http::header, web, App, HttpServer};
 use configs::envconfig::Config;
 use dotenv::dotenv;
+
+use crate::models::static_model::*;
 use middlewares::jwt::JwtMiddleware;
 use models::appstate_model::AppState;
 use models::rabbitmq_model::RabbitMQ;
 use models::redisclient_model::RedisClient;
 use sqlx::{mysql::MySqlPoolOptions, MySql, Pool}; // 使用 MySql // 引用 handler 模块
 use std::sync::Arc;
+use std::sync::Mutex;
 use test::a_testdemo;
 use tokio::sync::mpsc; // 异步版的 mpsc
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     a_testdemo::Test();
     dotenv().ok();
     let config: Config = Config::new();
+
     let log_level = config.log_level.clone(); // 获取日志级别配置
     if std::env::var_os("RUST_LOG").is_none() {
         std::env::set_var("RUST_LOG", log_level);
@@ -58,6 +62,11 @@ async fn main() -> std::io::Result<()> {
     let mut rabbitmq_use: Option<Arc<RabbitMQ>> = None;
     let rabbitmq_uri = &config.rabbitmq_uri;
     if !rabbitmq_uri.clone().is_empty() {
+        // 这里初始化静态变量，将配置中的值存储到全局变量
+        // 锁住 Mutex 来修改静态变量
+        let mut received_key = RABBITMQ_ROUTING_EXCHANGE.lock().unwrap();
+        *received_key = config.rabbitmq_exchange.clone();
+
         // 创建 RabbitMQ 实例，并打印错误信息
         let rabbitmq_new: Arc<RabbitMQ> = match RabbitMQ::new(rabbitmq_uri).await {
             Ok(rmq) => Arc::new(rmq),

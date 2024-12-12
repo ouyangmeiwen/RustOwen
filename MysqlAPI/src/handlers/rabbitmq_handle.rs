@@ -1,26 +1,21 @@
 use crate::models::apiresponse_model::ApiResponse;
 use crate::models::appstate_model::AppState;
 use crate::schemas::rabbitmq_schema::RabbitMQMsgInput;
-use crate::{
-    models::claims_model::Claims, models::claims_model::TokenRequest,
-    models::claims_model::TokenResponse, utils::jwt_utils::create_jwt,
-};
-use actix_web::web::Json;
+use crate::RABBITMQ_ROUTING_EXCHANGE;
 use actix_web::{get, post, web, HttpResponse, Responder};
-use chrono::Utc;
-use serde_json::json;
-//http://127.0.0.1:7788/api/rabbitmq/send?routing_key=routing_key.key&msg=11111
-#[get("/rabbitmq/send")]
+
+//http://127.0.0.1:7788/api/rabbitmq/send?routing_key=routing_key.key&msg=1232131111
+#[post("/rabbitmq/send")]
 pub async fn sendmsg_rabbitmq_handle(
-    query: web::Query<RabbitMQMsgInput>, // 通过请求体接收 user_id
+    body: web::Json<RabbitMQMsgInput>, // 通过请求体接收 user_id
     data: web::Data<AppState>,
 ) -> impl Responder {
-    let exchange: &str = "exchange_topic";
+    let exchange = RABBITMQ_ROUTING_EXCHANGE.lock().unwrap();
     // 发布者
     match data.rabbitmq.as_ref() {
         Some(rabbitmq) => {
             match rabbitmq
-                .publish(exchange, &query.routing_key, &query.msg)
+                .publish(&exchange.clone(), &body.routing_key, &body.msg)
                 .await
             {
                 Ok(()) => {

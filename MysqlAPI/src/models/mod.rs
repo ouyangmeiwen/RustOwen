@@ -6,3 +6,4 @@ pub mod libitem_model;
 pub mod note_model;
 pub mod rabbitmq_model;
 pub mod redisclient_model;
+pub mod static_model;

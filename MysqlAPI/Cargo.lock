@@ -2694,6 +2694,7 @@ dependencies = [
  "futures-util",
  "jsonwebtoken",
  "lapin",
+ "lazy_static",
  "log",
  "once_cell",
  "proc-macro2",
