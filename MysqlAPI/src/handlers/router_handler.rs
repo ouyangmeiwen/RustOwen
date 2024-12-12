@@ -8,15 +8,17 @@ use serde_json::json;
 //http://127.0.0.1:7788/api/healthchecker
 #[get("/healthchecker")]
 async fn health_checker_handler() -> impl Responder {
-    const MESSAGE: &str = "Build Simple CRUD API 我是谁 with Rust, SQLX, Postgres,and Actix Web";
-
+    const MESSAGE: &str = "Service is Running!"; //const 关键字用于定义不可变的编译时常量。这些常量在编译时就已经确定值
     HttpResponse::Ok().json(json!({"status": "success","message": MESSAGE}))
 }
-pub fn register(conf: &mut web::ServiceConfig) {
+pub fn config(conf: &mut web::ServiceConfig) {
     let scope = web::scope("/api")
+        //health_checker
+        .service(health_checker_handler)
+        //auth_handler
         .service(auth_handler::generate_token_handler)
         .service(auth_handler::generate_token_get_handler)
-        .service(health_checker_handler)
+        //note
         .service(note_handler::note_list_handler)
         .service(note_handler::create_note_handler)
         .service(note_handler::get_note_handler)

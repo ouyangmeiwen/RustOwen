@@ -69,7 +69,7 @@ async fn main() -> std::io::Result<()> {
                 db: pool.clone(),
                 redis_client: redis_client.clone(),
             }))
-            .configure(router_handler::register)
+            .configure(router_handler::config)
             .wrap(cors)
             .wrap(Logger::default())
         //.wrap(JwtMiddleware) // 应用 JWT 中间件
