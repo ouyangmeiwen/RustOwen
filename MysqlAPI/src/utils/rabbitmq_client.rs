@@ -3,22 +3,28 @@ use async_std::prelude::StreamExt;
 use lapin::{
     options::*, types::FieldTable, BasicProperties, Channel, Connection, ConnectionProperties,
 };
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tokio::sync::mpsc;
 
 impl RabbitMQ {
     // 创建新的 RabbitMQ 实例
     pub async fn new(uri: &str) -> Result<Self, lapin::Error> {
-        let connection: Connection = Connection::connect(uri, ConnectionProperties::default()).await?;
-        let channel = connection.create_channel().await?;
+        let connection: Connection =
+            Connection::connect(uri, ConnectionProperties::default()).await?;
+        let channel: Channel = connection.create_channel().await?;
         Ok(RabbitMQ {
             connection: Arc::new(connection),
             channel: Arc::new(channel),
+            exchange_declared: Arc::new(AtomicBool::new(false)), // 初始化标志
         })
     }
-
     // 声明交换机
     pub async fn declare_exchange(&self, exchange: &str) -> Result<(), lapin::Error> {
+        // 检查交换机是否已经声明
+        if self.exchange_declared.load(Ordering::SeqCst) {
+            return Ok(());
+        }
         self.channel
             .exchange_declare(
                 exchange,
@@ -30,9 +36,11 @@ impl RabbitMQ {
             .map_err(|e| {
                 eprintln!("Failed to declare exchange: {}", e);
                 e
-            })
+            })?;
+        // 设置标记为已声明
+        self.exchange_declared.store(true, Ordering::SeqCst);
+        Ok(())
     }
-
     // 发布消息
     pub async fn publish(
         &self,
@@ -40,6 +48,7 @@ impl RabbitMQ {
         routing_key: &str,
         message: &str,
     ) -> Result<(), lapin::Error> {
+        self.declare_exchange(exchange).await?;
         self.channel
             .basic_publish(
                 exchange,
@@ -110,6 +119,9 @@ impl RabbitMQ {
             while let Some(delivery) = consumer.next().await {
                 if let Ok(delivery) = delivery {
                     let message = String::from_utf8_lossy(&delivery.data).to_string();
+                    // 打印接收到的消息
+                    println!("Received message: {}", message);
+
                     let _ = tx.send(message).await;
 
                     if let Err(e) = delivery.ack(BasicAckOptions::default()).await {

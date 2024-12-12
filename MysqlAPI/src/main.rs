@@ -57,9 +57,10 @@ async fn main() -> std::io::Result<()> {
         .expect("Failed to initialize Redis client");
 
     let rabbitmquri = "amqp://owen:owen@localhost:5672/owenhost";
-    let exchange = "topic_logs";
-    let queue = "my_queue";
-    let routing_key = "my.key";
+    let exchange = "exchange_topic"; //接收者 发送这公用
+    let queue: &str = "queue_my"; //接收者使用
+                                  //let routing_key_send = "routing_key.key"; //发送者使用
+    let routing_key_revceived = "routing_key.*"; //接收者使用
 
     // 创建 RabbitMQ 实例，并打印错误信息
     let rabbitmq: Arc<RabbitMQ> = match RabbitMQ::new(rabbitmquri).await {
@@ -77,7 +78,7 @@ async fn main() -> std::io::Result<()> {
         let rabbitmq = rabbitmq.clone(); // 克隆 Arc
         async move {
             rabbitmq
-                .consume(exchange, queue, routing_key, tx)
+                .consume(exchange, queue, routing_key_revceived, tx)
                 .await
                 .unwrap();
         }

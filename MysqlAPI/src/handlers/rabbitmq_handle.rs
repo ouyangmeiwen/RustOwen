@@ -15,7 +15,7 @@ pub async fn sendmsg_rabbitmq_handle(
     body: web::Json<RabbitMQMsgInput>, // 通过请求体接收 user_id
     data: web::Data<AppState>,
 ) -> impl Responder {
-    let exchange = "topic_logs";
+    let exchange: &str = "exchange_topic";
     // 发布者
     match data
         .rabbitmq
