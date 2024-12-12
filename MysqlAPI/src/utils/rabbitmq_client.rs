@@ -9,7 +9,7 @@ use tokio::sync::mpsc;
 impl RabbitMQ {
     // 创建新的 RabbitMQ 实例
     pub async fn new(uri: &str) -> Result<Self, lapin::Error> {
-        let connection = Connection::connect(uri, ConnectionProperties::default()).await?;
+        let connection: Connection = Connection::connect(uri, ConnectionProperties::default()).await?;
         let channel = connection.create_channel().await?;
         Ok(RabbitMQ {
             connection: Arc::new(connection),
