@@ -2,6 +2,7 @@
 pub mod apiresponse_model;
 pub mod appstate_model;
 pub mod claims_model;
+pub mod config_model;
 pub mod libitem_model;
 pub mod note_model;
 pub mod rabbitmq_model;

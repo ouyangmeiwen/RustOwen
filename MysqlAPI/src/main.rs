@@ -9,8 +9,8 @@ use crate::handlers::router_handler;
 use actix_cors::Cors;
 use actix_web::middleware::Logger;
 use actix_web::{http::header, web, App, HttpServer};
-use configs::envconfig::Config;
 use dotenv::dotenv;
+use models::config_model::Config;
 
 use crate::models::static_model::*;
 use middlewares::jwt::JwtMiddleware;

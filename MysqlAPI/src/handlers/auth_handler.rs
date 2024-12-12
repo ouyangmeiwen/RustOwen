@@ -1,3 +1,4 @@
+use crate::configs::envconfig::STATIC_CONFIG;
 use crate::models::apiresponse_model::ApiResponse;
 use crate::models::appstate_model::AppState;
 use crate::{
@@ -50,6 +51,11 @@ pub async fn generate_token_get_handler(
     data: web::Data<AppState>,
 ) -> impl Responder {
     let user_id = query.user_id.clone(); // 从请求体中提取 user_id
+
+    let config = STATIC_CONFIG.lock().unwrap(); //智能指针
+    println!("Database URL: {}", config.database_url);
+    println!("Port: {}", config.port);
+    println!("Log Level: {}", config.log_level);
 
     let my_claims = Claims {
         user_id: user_id.clone(),

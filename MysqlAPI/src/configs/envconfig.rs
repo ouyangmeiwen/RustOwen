@@ -1,23 +1,8 @@
-// src/configs/envconfig.rs
-
+use crate::models::config_model::Config;
 use dotenv::dotenv;
+use lazy_static::lazy_static;
 use std::env;
-
-pub struct Config {
-    pub database_url: String,
-    pub port: u16,
-    pub cors_allowed_origin: String,
-    pub max_connections: u32,
-    pub log_level: String,
-    pub redis_url: String,
-
-    pub rabbitmq_uri: String,
-    pub rabbitmq_exchange: String,
-    pub rabbitmq_queue: String,
-    pub rabbitmq_routing_key_send: String,
-    pub rabbitmq_routing_key_revceived: String,
-}
-
+use std::sync::Mutex;
 impl Config {
     pub fn new() -> Config {
         dotenv().ok(); // 加载 .env 文件
@@ -64,4 +49,8 @@ impl Config {
             rabbitmq_routing_key_revceived,
         }
     }
+}
+lazy_static! {
+    // 使用 Mutex 包裹 Config，确保线程安全
+    pub static ref STATIC_CONFIG: Mutex<Config> = Mutex::new(Config::new());
 }

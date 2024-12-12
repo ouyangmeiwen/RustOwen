@@ -15,7 +15,7 @@ pub async fn sendmsg_rabbitmq_handle(
         Some(rabbitmq) => {
             let exchange = RABBITMQ_ROUTING_EXCHANGE.lock().unwrap();
             match rabbitmq
-                .publish(&exchange.clone(), &body.routing_key, &body.msg)
+                .publish(&exchange, &body.routing_key, &body.msg)
                 .await
             {
                 Ok(()) => {
