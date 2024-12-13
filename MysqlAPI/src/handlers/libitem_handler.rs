@@ -1,17 +1,22 @@
-use std::f32::consts::E;
-use std::path;
-
 use crate::handlers::base_handle::check_auth;
 use crate::models::apiresponse_model::ApiResponse;
 use crate::models::appstate_model::AppState;
+use crate::schemas::libitem_schema::ItemsExcelImportInput;
+use crate::utils::file_utils::FileUtils;
 use crate::{
     models::libitem_model::LibItemModel,
     schemas::libitem_schema::{CreateLibItemSchema, FilterOptions, UpdateLibItemSchema},
 };
 use actix_web::web::Json;
-use actix_web::{delete, get, patch, post, web, HttpRequest, HttpResponse, Responder};
+use actix_web::{body, delete, get, patch, post, web, HttpRequest, HttpResponse, Responder};
+use calamine::RangeDeserializerBuilder;
+use calamine::{open_workbook_auto, DataType, Reader};
 use chrono::prelude::*;
 use serde_json::json;
+use std::error::Error;
+use std::f32::consts::E;
+use std::path;
+use std::time::Instant;
 use uuid::Uuid;
 
 //http://127.0.0.1:7788/api/libitems
@@ -367,4 +372,54 @@ async fn delete_libitem_handler(
     }
     //HttpResponse::NoContent().finish()
     HttpResponse::Ok().json(ApiResponse::<()>::success_without_data())
+}
+
+#[get("/libitems/import")]
+pub async fn libitem_import_handler(
+    body: web::Json<ItemsExcelImportInput>,
+    data: web::Data<AppState>,
+) -> impl Responder {
+    if (FileUtils::exists(&body.Path)) {
+        match open_workbook_auto(&body.Path) {
+            Ok(mut workbook) => {
+                // Start measuring time for a specific code block
+                let start = Instant::now();
+                if let Some(Ok(range)) = workbook.worksheet_range(&body.Sheet) {
+                    for (row_index, row) in range.rows().enumerate() {
+                        // Iterate over each cell in the row with a column index
+                        for (col_index, cell) in row.iter().enumerate() {
+                            match cell {
+                                DataType::Empty => println!("Empty"),
+                                DataType::String(s) => println!("String: {}", s), // Handle as a string
+                                DataType::Float(f) => println!("Float: {}", f),
+                                DataType::Int(i) => println!("Int: {}", i),
+                                DataType::Bool(b) => println!("Bool: {}", b),
+                                _ => println!("Other: {:?}", cell),
+                            }
+                        }
+                    }
+                } else {
+                    return HttpResponse::NotFound().json(ApiResponse::<()>::error(&format!(
+                        "文件{}打开{}失败！",
+                        &body.Path, &body.Sheet
+                    )));
+                }
+                // Code after the time-measured block
+                let duration = start.elapsed();
+                println!("Time taken for the block: {} seconds", duration.as_secs());
+            }
+            Err(e) => {
+                return HttpResponse::NotFound().json(ApiResponse::<()>::error(&format!(
+                    "文件{}打开失败！",
+                    &body.Path
+                )));
+            }
+        }
+    } else {
+        return HttpResponse::NotFound().json(ApiResponse::<()>::error(&format!(
+            "文件{}不存在",
+            &body.Path
+        )));
+    }
+    HttpResponse::Ok().json(ApiResponse::<()>::success_with_msg("导入成功".to_string()))
 }

@@ -81,3 +81,21 @@ pub struct UpdateLibItemSchema {
     pub CreateType: Option<u8>,        // 改为 PascalCase
     pub TenantId: Option<i32>,         // 改为 PascalCase
 }
+#[derive(Serialize, Deserialize, Debug, Default)]
+pub struct ItemsExcelImportInput {
+    pub Path: String,
+    pub Sheet: String,
+    pub Title: i32,
+    pub Author: i32,
+    pub Tid: i32,
+    pub CallNo: i32,
+    pub ISBN: i32,
+    pub CatalogCode: i32,
+    pub Publisher: i32,
+    pub PubDate: i32,
+    pub Price: i32,
+    pub Pages: i32,
+    pub Barcode: i32,
+    pub Locationname: i32,
+    pub Tenantid: i32,
+}
