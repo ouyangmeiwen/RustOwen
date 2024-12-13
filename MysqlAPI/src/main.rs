@@ -9,6 +9,7 @@ use crate::handlers::router_handler;
 use actix_cors::Cors;
 use actix_web::middleware::Logger;
 use actix_web::{http::header, web, App, HttpServer};
+use configs::envconfig::STATIC_CONFIG;
 use dotenv::dotenv;
 use models::config_model::Config;
 
@@ -27,14 +28,12 @@ use tokio::sync::mpsc; // 异步版的 mpsc
 async fn main() -> std::io::Result<()> {
     a_testdemo::Test();
     dotenv().ok();
-    let config: Config = Config::new();
-
+    let config: Config = STATIC_CONFIG.lock().unwrap().clone(); //智能指针
     let log_level = config.log_level.clone(); // 获取日志级别配置
     if std::env::var_os("RUST_LOG").is_none() {
         std::env::set_var("RUST_LOG", log_level);
     }
     env_logger::init();
-
     let database_url = &config.database_url;
     let port = config.port;
     let max_connections = config.max_connections;
