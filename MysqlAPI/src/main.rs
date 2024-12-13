@@ -86,7 +86,7 @@ async fn main() -> std::io::Result<()> {
                     .consume(
                         &config.rabbitmq_exchange,
                         &config.rabbitmq_queue,
-                        &config.rabbitmq_routing_key_send,
+                        &config.rabbitmq_routing_key_revceived,
                         tx,
                     )
                     .await
