@@ -6,6 +6,7 @@ use lapin::{
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tokio::sync::mpsc;
+use tokio::time::{sleep, Duration};
 
 impl RabbitMQ {
     // 创建新的 RabbitMQ 实例
@@ -132,5 +133,48 @@ impl RabbitMQ {
         });
 
         Ok(())
+    }
+
+    /// 尝试连接 RabbitMQ 服务，并在失败时重试，最多重试 10 次
+    async fn connect_with_retry(uri: &str) -> Option<Connection> {
+        let max_retries = 10;
+        let mut retries = 0;
+        loop {
+            match Connection::connect(uri, ConnectionProperties::default()).await {
+                Ok(conn) => return Some(conn), // 成功连接，返回连接
+                Err(e) => {
+                    retries += 1;
+                    eprintln!(
+                        "Failed to connect to RabbitMQ (attempt {} of {}): {}, retrying...",
+                        retries, max_retries, e
+                    );
+                    // 如果已重试最大次数，则打印错误并返回 None
+                    if retries >= max_retries {
+                        eprintln!("Failed to connect to RabbitMQ after {} attempts.", retries);
+                        return None;
+                    }
+                    sleep(Duration::from_secs(5)).await; // 每 5 秒重试一次
+                }
+            }
+        }
+    }
+    /// 断线重连方法
+    pub async fn reconnect(&mut self, uri: &str, exchange: &str) -> Result<(), lapin::Error> {
+        loop {
+            // 尝试重新连接 RabbitMQ
+            if let Some(connection) = Self::connect_with_retry(uri).await {
+                let channel = connection.create_channel().await?;
+                // 更新 RabbitMQ 实例中的连接和通道
+                self.connection = Arc::new(connection);
+                self.channel = Arc::new(channel);
+                self.exchange_declared = Arc::new(AtomicBool::new(false));
+                // 重新声明交换机等必要的配置
+                self.declare_exchange(exchange).await?; // 假设你需要重新声明一个交换机
+                println!("Reconnected to RabbitMQ!");
+                return Ok(());
+            } else {
+                println!("Error to RabbitMQ!");
+            }
+        }
     }
 }
