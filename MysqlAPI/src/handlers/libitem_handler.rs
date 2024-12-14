@@ -379,39 +379,137 @@ pub async fn libitem_import_handler(
     body: web::Json<ItemsExcelImportInput>,
     data: web::Data<AppState>,
 ) -> impl Responder {
-    if (FileUtils::exists(&body.Path)) {
+    if FileUtils::exists(&body.Path) {
         match open_workbook_auto(&body.Path) {
             Ok(mut workbook) => {
-                // Start measuring time for a specific code block
                 let start = Instant::now();
                 if let Some(Ok(range)) = workbook.worksheet_range(&body.Sheet) {
+                    let mut items: Vec<LibItemModel> = Vec::new();
                     for (row_index, row) in range.rows().enumerate() {
-                        // Iterate over each cell in the row with a column index
+                        let mut item = LibItemModel {
+                            Id: "".to_string(),
+                            CreationTime: None,
+                            CreatorUserId: None,
+                            LastModificationTime: None,
+                            LastModifierUserId: None,
+                            IsDeleted: 0,
+                            DeleterUserId: None,
+                            DeletionTime: None,
+                            InfoId: None,
+                            Title: "".to_string(),
+                            Author: None,
+                            Barcode: "".to_string(),
+                            IsEnable: 0,
+                            CallNo: None,
+                            PreCallNo: None,
+                            CatalogCode: None,
+                            ItemState: 0,
+                            PressmarkId: None,
+                            PressmarkName: None,
+                            LocationId: None,
+                            LocationName: None,
+                            BookBarcode: None,
+                            ISBN: None,
+                            PubNo: None,
+                            Publisher: None,
+                            PubDate: None,
+                            Price: None,
+                            Pages: None,
+                            Summary: None,
+                            ItemType: 0,
+                            Remark: None,
+                            OriginType: 0,
+                            CreateType: 0,
+                            TenantId: body.Tenantid,
+                        };
+
                         for (col_index, cell) in row.iter().enumerate() {
-                            match cell {
-                                DataType::Empty => println!("Empty"),
-                                DataType::String(s) => println!("String: {}", s), // Handle as a string
-                                DataType::Float(f) => println!("Float: {}", f),
-                                DataType::Int(i) => println!("Int: {}", i),
-                                DataType::Bool(b) => println!("Bool: {}", b),
-                                _ => println!("Other: {:?}", cell),
+                            match col_index as i32 {
+                                x if x == body.Title_Index => {
+                                    if let DataType::String(value) = cell {
+                                        item.Title = value.clone();
+                                    }
+                                }
+                                x if x == body.Author_Index => {
+                                    if let DataType::String(value) = cell {
+                                        item.Author = Some(value.clone());
+                                    }
+                                }
+                                // x if x == body.Tid_Index => {
+                                //     if let DataType::String(value) = cell {
+                                //         item.Title = Some(value.clone());
+                                //     }
+                                // }
+                                x if x == body.CallNo_Index => {
+                                    if let DataType::String(value) = cell {
+                                        item.CallNo = Some(value.clone());
+                                    }
+                                }
+                                x if x == body.ISBN_Index => {
+                                    if let DataType::String(value) = cell {
+                                        item.ISBN = Some(value.clone());
+                                    }
+                                }
+
+                                x if x == body.CatalogCode_Index => {
+                                    if let DataType::String(value) = cell {
+                                        item.CatalogCode = Some(value.clone());
+                                    }
+                                }
+                                x if x == body.Publisher_Index => {
+                                    if let DataType::String(value) = cell {
+                                        item.Publisher = Some(value.clone());
+                                    }
+                                }
+                                x if x == body.PubDate_Index => {
+                                    if let DataType::String(value) = cell {
+                                        item.PubDate = Some(value.clone());
+                                    }
+                                }
+                                x if x == body.Price_Index => {
+                                    if let DataType::String(value) = cell {
+                                        item.Price = Some(value.clone());
+                                    }
+                                }
+                                x if x == body.Pages_Index => {
+                                    if let DataType::String(value) = cell {
+                                        item.Pages = Some(value.clone());
+                                    }
+                                }
+                                x if x == body.Barcode_Index => {
+                                    if let DataType::String(value) = cell {
+                                        item.Barcode = value.clone();
+                                    }
+                                }
+                                x if x == body.Locationname_Index => {
+                                    if let DataType::String(value) = cell {
+                                        item.LocationName = Some(value.clone());
+                                    }
+                                }
+                                _ => {}
                             }
                         }
+                        items.push(item);
                     }
+
+                    let duration = start.elapsed();
+                    println!("Time taken: {} seconds", duration.as_secs());
+
+                    // You can now save `items` to the database or perform further processing.
+                    return HttpResponse::Ok().json(
+                        ApiResponse::<Vec<LibItemModel>>::success_with_msg("导入成功".to_string()),
+                    );
                 } else {
                     return HttpResponse::NotFound().json(ApiResponse::<()>::error(&format!(
-                        "文件{}打开{}失败！",
+                        "文件{}的Sheet {}不存在！",
                         &body.Path, &body.Sheet
                     )));
                 }
-                // Code after the time-measured block
-                let duration = start.elapsed();
-                println!("Time taken for the block: {} seconds", duration.as_secs());
             }
             Err(e) => {
                 return HttpResponse::NotFound().json(ApiResponse::<()>::error(&format!(
-                    "文件{}打开失败！",
-                    &body.Path
+                    "文件{}打开失败：{}",
+                    &body.Path, e
                 )));
             }
         }
@@ -421,5 +519,4 @@ pub async fn libitem_import_handler(
             &body.Path
         )));
     }
-    HttpResponse::Ok().json(ApiResponse::<()>::success_with_msg("导入成功".to_string()))
 }
