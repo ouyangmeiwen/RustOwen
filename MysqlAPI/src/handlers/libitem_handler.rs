@@ -11,6 +11,7 @@ use actix_web::web::Json;
 use actix_web::{body, delete, get, patch, post, web, HttpRequest, HttpResponse, Responder};
 use calamine::RangeDeserializerBuilder;
 use calamine::{open_workbook_auto, DataType, Reader};
+use chrono::format::Item;
 use chrono::prelude::*;
 use serde_json::json;
 use std::error::Error;
@@ -374,7 +375,7 @@ async fn delete_libitem_handler(
     HttpResponse::Ok().json(ApiResponse::<()>::success_without_data())
 }
 
-#[get("/libitems/import")]
+#[post("/libitems/import")]
 pub async fn libitem_import_handler(
     body: web::Json<ItemsExcelImportInput>,
     data: web::Data<AppState>,
@@ -384,11 +385,12 @@ pub async fn libitem_import_handler(
             Ok(mut workbook) => {
                 let start = Instant::now();
                 if let Some(Ok(range)) = workbook.worksheet_range(&body.Sheet) {
-                    let mut items: Vec<LibItemModel> = Vec::new();
+                    //let mut items: Vec<LibItemModel> = Vec::new();
                     for (row_index, row) in range.rows().enumerate() {
+                        println!("当前执行到:{}条", row_index + 1);
                         let mut item = LibItemModel {
-                            Id: "".to_string(),
-                            CreationTime: None,
+                            Id: Uuid::new_v4().to_string().replace("-", "").to_string(),
+                            CreationTime: Some(Utc::now().naive_utc()),
                             CreatorUserId: None,
                             LastModificationTime: None,
                             LastModifierUserId: None,
@@ -399,11 +401,11 @@ pub async fn libitem_import_handler(
                             Title: "".to_string(),
                             Author: None,
                             Barcode: "".to_string(),
-                            IsEnable: 0,
+                            IsEnable: 1,
                             CallNo: None,
                             PreCallNo: None,
                             CatalogCode: None,
-                            ItemState: 0,
+                            ItemState: 3,
                             PressmarkId: None,
                             PressmarkName: None,
                             LocationId: None,
@@ -416,72 +418,66 @@ pub async fn libitem_import_handler(
                             Price: None,
                             Pages: None,
                             Summary: None,
-                            ItemType: 0,
-                            Remark: None,
-                            OriginType: 0,
-                            CreateType: 0,
+                            ItemType: 1,
+                            Remark: Some("rust导入".to_string()),
+                            OriginType: 1,
+                            CreateType: 1,
                             TenantId: body.Tenantid,
                         };
-
                         for (col_index, cell) in row.iter().enumerate() {
                             match col_index as i32 {
-                                x if x == body.Title_Index => {
+                                x if x == body.Title_Index - 1 => {
                                     if let DataType::String(value) = cell {
                                         item.Title = value.clone();
                                     }
                                 }
-                                x if x == body.Author_Index => {
+                                x if x == body.Author_Index - 1 => {
                                     if let DataType::String(value) = cell {
                                         item.Author = Some(value.clone());
                                     }
                                 }
-                                // x if x == body.Tid_Index => {
-                                //     if let DataType::String(value) = cell {
-                                //         item.Title = Some(value.clone());
-                                //     }
-                                // }
-                                x if x == body.CallNo_Index => {
+                                x if x == body.CallNo_Index - 1 => {
                                     if let DataType::String(value) = cell {
                                         item.CallNo = Some(value.clone());
                                     }
                                 }
-                                x if x == body.ISBN_Index => {
+                                x if x == body.ISBN_Index - 1 => {
                                     if let DataType::String(value) = cell {
                                         item.ISBN = Some(value.clone());
                                     }
                                 }
 
-                                x if x == body.CatalogCode_Index => {
+                                x if x == body.CatalogCode_Index - 1 => {
                                     if let DataType::String(value) = cell {
                                         item.CatalogCode = Some(value.clone());
                                     }
                                 }
-                                x if x == body.Publisher_Index => {
+                                x if x == body.Publisher_Index - 1 => {
                                     if let DataType::String(value) = cell {
                                         item.Publisher = Some(value.clone());
                                     }
                                 }
-                                x if x == body.PubDate_Index => {
+                                x if x == body.PubDate_Index - 1 => {
                                     if let DataType::String(value) = cell {
                                         item.PubDate = Some(value.clone());
                                     }
                                 }
-                                x if x == body.Price_Index => {
+                                x if x == body.Price_Index - 1 => {
                                     if let DataType::String(value) = cell {
                                         item.Price = Some(value.clone());
                                     }
                                 }
-                                x if x == body.Pages_Index => {
+                                x if x == body.Pages_Index - 1 => {
                                     if let DataType::String(value) = cell {
                                         item.Pages = Some(value.clone());
                                     }
                                 }
-                                x if x == body.Barcode_Index => {
+                                x if x == body.Barcode_Index - 1 => {
                                     if let DataType::String(value) = cell {
                                         item.Barcode = value.clone();
                                     }
                                 }
-                                x if x == body.Locationname_Index => {
+                                x if x == body.Locationname_Index - 1 => {
                                     if let DataType::String(value) = cell {
                                         item.LocationName = Some(value.clone());
                                     }
@@ -489,9 +485,10 @@ pub async fn libitem_import_handler(
                                 _ => {}
                             }
                         }
-                        items.push(item);
+                        //items.push(item);
+                        //改成单条执行
+                        insert_libitem(&data, &item).await;
                     }
-
                     let duration = start.elapsed();
                     println!("Time taken: {} seconds", duration.as_secs());
 
@@ -518,5 +515,55 @@ pub async fn libitem_import_handler(
             "文件{}不存在",
             &body.Path
         )));
+    }
+}
+
+async fn insert_libitem(data: &web::Data<AppState>, item: &LibItemModel) {
+    let query_result = sqlx::query!(
+        r#"
+        INSERT INTO libitem (
+            Id, CreationTime,IsDeleted, Title, Author, Barcode, IsEnable,CallNo, PreCallNo, CatalogCode, ItemState,
+            PressmarkId, PressmarkName, LocationId, LocationName, BookBarcode, ISBN, PubNo,
+            Publisher, PubDate, Price, Pages, Summary, ItemType, Remark, OriginType, CreateType, TenantId
+        ) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)
+        "#,
+        item.Id, // Id
+        item.CreationTime, //CreationTime
+        item.IsDeleted, // IsDeleted
+        item.Title,     // Title
+        item.Author,     // Author
+        item.Barcode,    // Barcode
+        item.IsDeleted, // IsDeleted
+        item.CallNo,     // CallNo
+        item.PreCallNo,  // PreCallNo
+        item.CatalogCode,// CatalogCode
+        item.ItemState,    // ItemState
+        item.PressmarkId, // PressmarkId
+        item.PressmarkName, // PressmarkName
+        item.LocationId, // LocationId
+        item.LocationName, // LocationName
+        item.BookBarcode, // BookBarcode
+        item.ISBN, // ISBN
+        item.PubNo,              // PubNo
+        item.Publisher, // Publisher
+        item.PubDate, // PubDate
+        item.Price, // Price
+        item.Pages, // Pages
+        item.Summary, // Summary
+        item.ItemType, // ItemType
+        item.Remark, // Remark
+        item.OriginType,// OriginType
+        item.CreateType,// CreateType
+        item.TenantId // TenantId
+    )
+    .execute(&data.db)
+    .await;
+    match query_result {
+        Ok(_) => {
+            println!("insert {} success", item.Barcode);
+        }
+        Err(e) => {
+            println!("insert {} error", item.Barcode);
+        }
     }
 }
