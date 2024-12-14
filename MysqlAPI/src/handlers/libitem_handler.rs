@@ -374,12 +374,13 @@ async fn delete_libitem_handler(
     //HttpResponse::NoContent().finish()
     HttpResponse::Ok().json(ApiResponse::<()>::success_without_data())
 }
-
+//http://127.0.0.1:7788/api/libitems/import
 #[post("/libitems/import")]
 pub async fn libitem_import_handler(
     body: web::Json<ItemsExcelImportInput>,
     data: web::Data<AppState>,
 ) -> impl Responder {
+    println!("导入参数{:?}", body);
     if FileUtils::exists(&body.Path) {
         match open_workbook_auto(&body.Path) {
             Ok(mut workbook) => {
