@@ -12,7 +12,9 @@ use actix_web::middleware::Logger;
 use actix_web::{http::header, web, App, HttpServer};
 use configs::envconfig::STATIC_CONFIG;
 use dotenv::dotenv;
+use log::info;
 use models::config_model::Config;
+use utils::websockethelper::WebSocketHelper;
 
 use crate::models::static_model::*;
 use middlewares::jwt::JwtMiddleware;
@@ -94,6 +96,11 @@ async fn main() -> std::io::Result<()> {
             }
         });
     }
+    // // 模拟一个 WebSocket 客户端，保持 WebSocket 服务活跃
+    // let fake_client_id = "fake_client".to_string();
+    // let _ = WebSocketHelper::new(fake_client_id);
+    // info!("WebSocket service started with a fake client.");
+
     HttpServer::new(move || {
         let cors: Cors = Cors::default()
             .allowed_origin(&config.cors_allowed_origin) // 直接使用 config
