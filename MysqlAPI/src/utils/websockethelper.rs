@@ -27,12 +27,14 @@ impl WebSocketHelper {
     }
 
     // Send a message to this WebSocket client
+    // 这是实例方法，需要访问实例的 `id`
     fn send_message(&self, message: String) {
         let clients = CLIENTS.lock().unwrap(); // Lock the Mutex
         if let Some(client) = clients.get(&self.id) {
             let _ = client.do_send(WsMessage(message)); // Send the custom message
         }
     }
+    // 这是静态方法，不依赖实例的状态
     fn send_message_to_client(client_id: String, message: String) {
         let clients = CLIENTS.lock().unwrap(); // Lock the Mutex
         if let Some(client) = clients.get(&client_id) {
@@ -41,6 +43,7 @@ impl WebSocketHelper {
             println!("Client with id {} not found.", client_id);
         }
     }
+    // 这是静态方法，广播消息给所有客户端
     fn broadcast_message(message: String) {
         let clients = CLIENTS.lock().unwrap(); // Lock the Mutex
         for client in clients.values() {
