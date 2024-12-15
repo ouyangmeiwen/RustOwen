@@ -32,6 +32,7 @@ pub async fn websocket_register_handler(
     })
 }
 // HTTP handler for sending a message to a WebSocket client
+
 async fn send_message_to_websocket(
     client_id: web::Path<String>, // Client ID is passed as part of the URL path
     message: web::Json<String>,   // The message to send is passed as JSON in the body
