@@ -136,14 +136,14 @@ async fn create_libitem_handler(
         ) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)
         "#,
         new_id,                                      // Id
-        now,
+        now,                                         //CreationTime
         (false) as i8,                               // IsDeleted
         body.Title.to_string(),                      // Title
-        body.Author.as_ref().unwrap_or(&empty_string),     // Author
+        body.Author.as_ref().unwrap_or(&empty_string),// Author
         body.Barcode.to_string(),                    // Barcode
         (true) as i8,                               // IsEnable
-        body.CallNo.as_ref().unwrap_or(&empty_string),     // CallNo
-        body.PreCallNo.as_ref().unwrap_or(&empty_string),  // PreCallNo
+        body.CallNo.as_ref().unwrap_or(&empty_string), // CallNo
+        body.PreCallNo.as_ref().unwrap_or(&empty_string),// PreCallNo
         body.CatalogCode.as_ref().unwrap_or(&empty_string),// CatalogCode
         body.ItemState,                              // ItemState
         body.PressmarkId.as_ref().unwrap_or(&empty_string), // PressmarkId
