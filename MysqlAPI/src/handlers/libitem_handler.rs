@@ -13,6 +13,7 @@ use calamine::RangeDeserializerBuilder;
 use calamine::{open_workbook_auto, DataType, Reader};
 use chrono::format::Item;
 use chrono::prelude::*;
+use futures::future::ok;
 use serde_json::json;
 use std::error::Error;
 use std::f32::consts::E;
@@ -488,7 +489,14 @@ pub async fn import_libitem_handler(
                         }
                         //items.push(item);
                         //改成单条执行
-                        insert_libitem(&data, &item).await;
+                        match insert_libitem(&data, &item).await {
+                            Ok(_) => {
+                                println!("insert {} success", item.Barcode);
+                            }
+                            Err(_) => {
+                                println!("insert {} error", item.Barcode);
+                            }
+                        }
                     }
                     let duration = start.elapsed();
                     println!("Time taken: {} seconds", duration.as_secs());
@@ -519,7 +527,7 @@ pub async fn import_libitem_handler(
     }
 }
 
-async fn insert_libitem(data: &web::Data<AppState>, item: &LibItemModel) {
+async fn insert_libitem(data: &web::Data<AppState>, item: &LibItemModel) -> Result<(), String> {
     let query_result = sqlx::query!(
         r#"
         INSERT INTO libitem (
@@ -560,11 +568,10 @@ async fn insert_libitem(data: &web::Data<AppState>, item: &LibItemModel) {
     .execute(&data.db)
     .await;
     match query_result {
-        Ok(_) => {
-            println!("insert {} success", item.Barcode);
-        }
+        Ok(_) => Ok(()), // 返回一个 Result::Ok 表示成功
         Err(e) => {
-            println!("insert {} error", item.Barcode);
+            // 将错误信息转换为字符串并返回 Result::Err
+            Err(format!("Database insertion failed: {}", e))
         }
     }
 }
