@@ -5,3 +5,4 @@ pub mod rabbitmq_client;
 pub mod redis_client;
 pub mod string_utils;
 pub mod timeutils;
+pub mod websockethelper;
