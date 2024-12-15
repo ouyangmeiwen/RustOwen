@@ -1,10 +1,10 @@
 use crate::utils::websockethelper::WebSocketHelper;
 use actix_web::error::{ErrorBadRequest, ErrorInternalServerError};
-use actix_web::{get, web, Error, HttpRequest, HttpResponse, Responder};
+use actix_web::{get, post, web, Error, HttpRequest, HttpResponse, Responder};
 use actix_web_actors::ws;
 use log::info;
 
-//#[get("/ws/{client_id}")]
+//ws://127.0.0.1:7788/ws/1123123   postman
 pub async fn websocket_register_handler(
     req: HttpRequest,
     stream: web::Payload,
@@ -33,15 +33,19 @@ pub async fn websocket_register_handler(
 }
 // HTTP handler for sending a message to a WebSocket client
 
-async fn send_message_to_websocket(
+//http://127.0.0.1:7788/api/websocket/sendmsg/11231231
+#[post("/websocket/sendmsg/{client_id}")]
+async fn send_message_to_websocket_handler(
     client_id: web::Path<String>, // Client ID is passed as part of the URL path
     message: web::Json<String>,   // The message to send is passed as JSON in the body
 ) -> impl Responder {
     let client_id = client_id.into_inner(); // Extract client ID from URL path
     let message = message.into_inner(); // Extract message from the request body
-
-    // Send the message to the specified client
-    WebSocketHelper::send_message_to_client(client_id, message);
-
-    HttpResponse::Ok().body("Message sent to WebSocket client")
+                                        // Send the message to the specified client
+    if client_id.clone() == "all" {
+        WebSocketHelper::broadcast_message(message);
+    } else {
+        WebSocketHelper::send_message_to_client(client_id.clone(), message);
+    }
+    HttpResponse::Ok().body(println!("Message sent to WebSocket client: {}", client_id))
 }

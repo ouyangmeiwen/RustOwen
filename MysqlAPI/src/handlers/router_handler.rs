@@ -20,7 +20,7 @@ pub fn config(conf: &mut web::ServiceConfig) {
         .service(auth_handler::generate_token_handler)
         .service(auth_handler::generate_token_get_handler)
         //socket
-        //.service(websocket_handler::send_message_to_websocket)
+        .service(websocket_handler::send_message_to_websocket_handler)
         //MQ
         .service(rabbitmq_handle::sendmsg_post_rabbitmq_handle)
         .service(rabbitmq_handle::sendmsg_get_rabbitmq_handle)
