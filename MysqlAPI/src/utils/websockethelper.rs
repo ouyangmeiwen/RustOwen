@@ -90,7 +90,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WebSocketHelper {
                 // Handle the received text message
                 println!("Received message: {}", text);
                 // Optionally, respond with a message
-                ctx.text(format!("Echo: {}", text)); // Echo the received message
+                //ctx.text(format!("Echo: {}", text)); // Echo the received message
             }
             Ok(ws::Message::Binary(bin)) => {
                 // Handle binary messages if needed

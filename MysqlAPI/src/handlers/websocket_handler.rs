@@ -47,5 +47,5 @@ async fn send_message_to_websocket_handler(
     } else {
         WebSocketHelper::send_message_to_client(client_id.clone(), message);
     }
-    HttpResponse::Ok().body(println!("Message sent to WebSocket client: {}", client_id))
+    HttpResponse::Ok().body(format!("Message sent to WebSocket client: {}", client_id))
 }
