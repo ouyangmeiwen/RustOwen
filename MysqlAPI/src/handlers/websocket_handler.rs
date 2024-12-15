@@ -31,3 +31,16 @@ pub async fn websocket_register_handler(
         ErrorInternalServerError(format!("WebSocket error: {}", e))
     })
 }
+// HTTP handler for sending a message to a WebSocket client
+async fn send_message_to_websocket(
+    client_id: web::Path<String>, // Client ID is passed as part of the URL path
+    message: web::Json<String>,   // The message to send is passed as JSON in the body
+) -> impl Responder {
+    let client_id = client_id.into_inner(); // Extract client ID from URL path
+    let message = message.into_inner(); // Extract message from the request body
+
+    // Send the message to the specified client
+    WebSocketHelper::send_message_to_client(client_id, message);
+
+    HttpResponse::Ok().body("Message sent to WebSocket client")
+}

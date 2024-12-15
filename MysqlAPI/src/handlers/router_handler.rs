@@ -2,6 +2,7 @@ use crate::handlers::auth_handler;
 use crate::handlers::libitem_handler;
 use crate::handlers::note_handler; // 引用 handler 模块 // 引用 handler 模块
 use crate::handlers::rabbitmq_handle;
+use crate::handlers::websocket_handler;
 use actix_web::{get, web, HttpResponse, Responder};
 use serde_json::json;
 
@@ -19,6 +20,7 @@ pub fn config(conf: &mut web::ServiceConfig) {
         .service(auth_handler::generate_token_handler)
         .service(auth_handler::generate_token_get_handler)
         //socket
+        //.service(websocket_handler::send_message_to_websocket)
         //MQ
         .service(rabbitmq_handle::sendmsg_post_rabbitmq_handle)
         .service(rabbitmq_handle::sendmsg_get_rabbitmq_handle)

@@ -35,7 +35,7 @@ impl WebSocketHelper {
         }
     }
     // 这是静态方法，不依赖实例的状态
-    fn send_message_to_client(client_id: String, message: String) {
+    pub fn send_message_to_client(client_id: String, message: String) {
         let clients = CLIENTS.lock().unwrap(); // Lock the Mutex
         if let Some(client) = clients.get(&client_id) {
             let _ = client.do_send(WsMessage(message)); // Send the message to the specific client
@@ -44,7 +44,7 @@ impl WebSocketHelper {
         }
     }
     // 这是静态方法，广播消息给所有客户端
-    fn broadcast_message(message: String) {
+    pub fn broadcast_message(message: String) {
         let clients = CLIENTS.lock().unwrap(); // Lock the Mutex
         for client in clients.values() {
             let _ = client.do_send(WsMessage(message.clone())); // Send the message to all clients
