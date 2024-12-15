@@ -390,7 +390,7 @@ pub async fn import_libitem_handler(
                     //let mut items: Vec<LibItemModel> = Vec::new();
                     for (row_index, row) in range.rows().enumerate() {
                         println!("row:{} work", row_index + 1);
-                        let mut item = LibItemModel {
+                        let mut item: LibItemModel = LibItemModel {
                             Id: Uuid::new_v4().to_string().replace("-", "").to_string(),
                             CreationTime: Some(Utc::now().naive_utc()),
                             CreatorUserId: None,
