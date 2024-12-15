@@ -1,6 +1,14 @@
+use uuid::Uuid;
+
 pub struct StringUtils;
 
 impl StringUtils {
+    pub fn uuid32() -> String {
+        return Uuid::new_v4().to_string().replace("-", "").to_string();
+    }
+    pub fn uuid36() -> String {
+        return Uuid::new_v4().to_string().to_string();
+    }
     /// 判断字符串是否为空或仅包含空白字符
     pub fn is_blank(s: &str) -> bool {
         s.trim().is_empty()
