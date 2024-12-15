@@ -3,7 +3,7 @@ use chrono::{Duration, Local, NaiveDateTime, Utc};
 pub struct NaiveDateTimeUtils;
 
 impl NaiveDateTimeUtils {
-    /// 获取当前时间（NaiveDateTime），基于本地时区
+    /// 获取当前时间（NaiveDateTime），基于本地时区 系统当前时间无格式
     pub fn now_local() -> NaiveDateTime {
         Local::now().naive_local()
     }

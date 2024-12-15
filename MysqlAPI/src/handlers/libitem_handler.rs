@@ -251,7 +251,7 @@ async fn edit_libitem_handler(
     }
 
     let libitem = query_result.unwrap();
-    let now = Utc::now().naive_utc();
+    let now = NaiveDateTimeUtils::now_local();
     let empty_string = "".to_string(); // 提前创建一个 String
     let query_result = sqlx::query!(
         r#"
