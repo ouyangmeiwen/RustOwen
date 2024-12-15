@@ -388,7 +388,7 @@ pub async fn libitem_import_handler(
                 if let Some(Ok(range)) = workbook.worksheet_range(&body.Sheet) {
                     //let mut items: Vec<LibItemModel> = Vec::new();
                     for (row_index, row) in range.rows().enumerate() {
-                        println!("当前执行到:{}条", row_index + 1);
+                        println!("row:{} work", row_index + 1);
                         let mut item = LibItemModel {
                             Id: Uuid::new_v4().to_string().replace("-", "").to_string(),
                             CreationTime: Some(Utc::now().naive_utc()),

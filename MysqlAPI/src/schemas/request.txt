@@ -46,3 +46,22 @@
     "CreateType": 1,
     "TenantId": 1001
 }
+
+
+{
+    "Path": "D:/20241020在架图书数据V4.xlsx",
+    "Sheet": "Sheet1",
+    "Title_Index": 2,
+    "Author_Index": 6,
+    "Tid_Index": 0,
+    "CallNo_Index": 3,
+    "ISBN_Index": 4,
+    "CatalogCode_Index": 0,
+    "Publisher_Index": 8,
+    "PubDate_Index": 9,
+    "Price_Index": 5,
+    "Pages_Index": 0,
+    "Barcode_Index": 1,
+    "Locationname_Index": 7,
+    "Tenantid": 2256
+}
