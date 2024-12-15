@@ -140,7 +140,7 @@ async fn create_libitem_handler(
         body.Title.to_string(),                      // Title
         body.Author.as_ref().unwrap_or(&empty_string),     // Author
         body.Barcode.to_string(),                    // Barcode
-        (true) as i8,                               // IsDeleted
+        (true) as i8,                               // IsEnable
         body.CallNo.as_ref().unwrap_or(&empty_string),     // CallNo
         body.PreCallNo.as_ref().unwrap_or(&empty_string),  // PreCallNo
         body.CatalogCode.as_ref().unwrap_or(&empty_string),// CatalogCode
@@ -495,7 +495,7 @@ pub async fn libitem_import_handler(
 
                     // You can now save `items` to the database or perform further processing.
                     return HttpResponse::Ok().json(
-                        ApiResponse::<Vec<LibItemModel>>::success_with_msg("导入成功".to_string()),
+                        ApiResponse::<Vec<LibItemModel>>::success_with_msg(&"导入成功".to_string()),
                     );
                 } else {
                     return HttpResponse::NotFound().json(ApiResponse::<()>::error(&format!(
@@ -534,7 +534,7 @@ async fn insert_libitem(data: &web::Data<AppState>, item: &LibItemModel) {
         item.Title,     // Title
         item.Author,     // Author
         item.Barcode,    // Barcode
-        item.IsDeleted, // IsDeleted
+        item.IsEnable, // IsDeleted
         item.CallNo,     // CallNo
         item.PreCallNo,  // PreCallNo
         item.CatalogCode,// CatalogCode

@@ -32,10 +32,10 @@ impl<T> ApiResponse<T> {
             count: Some(cnt),
         }
     }
-    pub fn success_with_msg(msg: String) -> Self {
+    pub fn success_with_msg(msg: &str) -> Self {
         ApiResponse {
             status: "success".to_string(),
-            message: Some(msg),
+            message: Some(msg.to_string()),
             data: None,
             count: None,
         }
