@@ -1,11 +1,11 @@
 use crate::utils::websockethelper::WebSocketHelper;
-use actix::prelude::*;
 use actix_web::error::{ErrorBadRequest, ErrorInternalServerError};
-use actix_web::{web, Error, HttpRequest, HttpResponse, Responder};
+use actix_web::{get, web, Error, HttpRequest, HttpResponse, Responder};
 use actix_web_actors::ws;
 use log::info;
 
-pub async fn websocket_register(
+//#[get("/ws/{client_id}")]
+pub async fn websocket_register_handler(
     req: HttpRequest,
     stream: web::Payload,
 ) -> Result<HttpResponse, Error> {

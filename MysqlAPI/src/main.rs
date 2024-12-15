@@ -6,7 +6,7 @@ pub mod schemas;
 pub mod test;
 mod utils;
 use crate::handlers::router_handler;
-use crate::handlers::websocket_handler::websocket_register;
+use crate::handlers::websocket_handler::websocket_register_handler;
 use actix_cors::Cors;
 use actix_web::middleware::Logger;
 use actix_web::{http::header, web, App, HttpServer};
@@ -117,7 +117,7 @@ async fn main() -> std::io::Result<()> {
                 redis_client: redis_client.clone(),
                 rabbitmq: rabbitmq_use.clone(),
             }))
-            .route("/ws/{client_id}", web::get().to(websocket_register)) // WebSocket route
+            .route("/ws/{client_id}", web::get().to(websocket_register_handler)) // WebSocket route
             .configure(router_handler::config)
             .wrap(cors)
             .wrap(Logger::default())
