@@ -3,6 +3,7 @@ use crate::models::apiresponse_model::ApiResponse;
 use crate::models::appstate_model::AppState;
 use crate::schemas::libitem_schema::ItemsExcelImportInput;
 use crate::utils::file_utils::FileUtils;
+use crate::utils::naivedatetimeutils::NaiveDateTimeUtils;
 use crate::{
     models::libitem_model::LibItemModel,
     schemas::libitem_schema::{CreateLibItemSchema, FilterOptions, UpdateLibItemSchema},
@@ -126,7 +127,7 @@ async fn create_libitem_handler(
 ) -> impl Responder {
     let new_id = Uuid::new_v4().to_string().replace("-", ""); // 去掉破折号
     let empty_string = "".to_string(); // 提前创建一个 String
-    let now: NaiveDateTime = Utc::now().naive_utc();
+    let now: NaiveDateTime = NaiveDateTimeUtils::now_local();
     let query_result = sqlx::query!(
         r#"
         INSERT INTO libitem (
@@ -392,7 +393,7 @@ pub async fn import_libitem_handler(
                         println!("row:{} work", row_index + 1);
                         let mut item: LibItemModel = LibItemModel {
                             Id: Uuid::new_v4().to_string().replace("-", "").to_string(),
-                            CreationTime: Some(Utc::now().naive_utc()),
+                            CreationTime: Some(NaiveDateTimeUtils::now_local()),
                             CreatorUserId: None,
                             LastModificationTime: None,
                             LastModifierUserId: None,

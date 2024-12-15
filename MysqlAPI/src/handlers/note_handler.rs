@@ -133,7 +133,7 @@ async fn edit_note_handler(
     let note = query_result.unwrap();
 
     // 获取当前时间
-    let now = Utc::now().naive_utc();
+    let now = NaiveDateTimeUtils::now_local();
 
     // 处理发布字段，将 Option<bool> 转为 i8 (0 或 1)
     let published_value = body.published.unwrap_or(note.published.unwrap_or(0)) as i8;

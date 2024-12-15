@@ -8,7 +8,7 @@ impl NaiveDateTimeUtils {
         Local::now().naive_local()
     }
 
-    /// 获取当前时间（NaiveDateTime），基于 UTC
+    /// 获取当前时间（NaiveDateTime），基于 UTC 晚八个小时
     pub fn now_utc() -> NaiveDateTime {
         Utc::now().naive_utc()
     }
