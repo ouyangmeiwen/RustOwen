@@ -376,7 +376,7 @@ async fn delete_libitem_handler(
 }
 //http://127.0.0.1:7788/api/libitems/import
 #[post("/libitems/import")]
-pub async fn libitem_import_handler(
+pub async fn import_libitem_handler(
     body: web::Json<ItemsExcelImportInput>,
     data: web::Data<AppState>,
 ) -> impl Responder {
