@@ -123,7 +123,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(Logger::default())
         //.wrap(JwtMiddleware) // 应用 JWT 中间件
     })
-    .bind(("127.0.0.1", port))?
+    .bind(("0.0.0.0", port))?
     .shutdown_timeout(30) // 设置优雅关闭的超时，单位是秒
     .run()
     .await
