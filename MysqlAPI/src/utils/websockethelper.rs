@@ -43,6 +43,15 @@ impl WebSocketHelper {
             println!("Client with id {} not found.", client_id);
         }
     }
+    // 这是静态方法，不依赖实例的状态
+    pub fn send_message_to_group_client(group: String, message: String) {
+        let clients = CLIENTS.lock().unwrap(); // Lock the Mutex
+        for (key, addr) in clients.iter() {
+            if (key.starts_with(&group)) {
+                let _ = addr.do_send(WsMessage(message.clone())); // Send the message to all clients
+            }
+        }
+    }
     // 这是静态方法，广播消息给所有客户端
     pub fn broadcast_message(message: String) {
         let clients = CLIENTS.lock().unwrap(); // Lock the Mutex

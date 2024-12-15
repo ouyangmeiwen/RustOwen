@@ -4,7 +4,7 @@ use actix_web::{get, post, web, Error, HttpRequest, HttpResponse, Responder};
 use actix_web_actors::ws;
 use log::info;
 
-//ws://127.0.0.1:7788/ws/1123123   postman
+//ws://127.0.0.1:7788/ws/sm_01   postman
 pub async fn websocket_register_handler(
     req: HttpRequest,
     stream: web::Payload,
@@ -33,7 +33,8 @@ pub async fn websocket_register_handler(
 }
 // HTTP handler for sending a message to a WebSocket client
 
-//http://127.0.0.1:7788/api/websocket/sendmsg/11231231
+//http://127.0.0.1:7788/api/websocket/sendmsg/sm_01
+//http://127.0.0.1:7788/api/websocket/sendmsg/group_sm
 #[post("/websocket/sendmsg/{client_id}")]
 async fn send_message_to_websocket_handler(
     client_id: web::Path<String>, // Client ID is passed as part of the URL path
@@ -42,10 +43,19 @@ async fn send_message_to_websocket_handler(
     let client_id = client_id.into_inner(); // Extract client ID from URL path
     let message = message.into_inner(); // Extract message from the request body
                                         // Send the message to the specified client
-    if client_id.clone() == "all" {
+    if &client_id == "all" {
         WebSocketHelper::broadcast_message(message);
+    } else if client_id.to_string().starts_with("group_") {
+        WebSocketHelper::send_message_to_group_client(
+            client_id
+                .to_string()
+                .strip_prefix("group_")
+                .unwrap()
+                .to_string(),
+            message,
+        );
     } else {
-        WebSocketHelper::send_message_to_client(client_id.clone(), message);
+        WebSocketHelper::send_message_to_client(client_id.to_string(), message);
     }
-    HttpResponse::Ok().body(format!("Message sent to WebSocket client: {}", client_id))
+    HttpResponse::Ok().body(format!("Message sent to WebSocket client: {}", &client_id))
 }
