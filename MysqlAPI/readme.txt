@@ -32,7 +32,7 @@ rabbitmqctl start
 
 
 
-
+--gdb
 
 
 {
@@ -89,8 +89,8 @@ rabbitmqctl start
 
 
 
-
-
+ 
+--lldb 官方推荐
 
 
 {
