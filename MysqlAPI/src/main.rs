@@ -8,11 +8,13 @@ mod utils;
 use crate::handlers::router_handler;
 use crate::handlers::websocket_handler::websocket_register;
 use actix_cors::Cors;
+use actix_limitation::Limiter;
 use actix_web::middleware::Logger;
 use actix_web::{http::header, web, App, HttpServer};
 use configs::envconfig::STATIC_CONFIG;
 use dotenv::dotenv;
 use log::info;
+use middlewares::limiter::RateLimitMiddleware;
 use models::config_model::Config;
 use utils::websockethelper::WebSocketHelper;
 
@@ -96,10 +98,6 @@ async fn main() -> std::io::Result<()> {
             }
         });
     }
-    // // 模拟一个 WebSocket 客户端，保持 WebSocket 服务活跃
-    // let fake_client_id = "fake_client".to_string();
-    // let _ = WebSocketHelper::new(fake_client_id);
-    // info!("WebSocket service started with a fake client.");
 
     HttpServer::new(move || {
         let cors: Cors = Cors::default()
@@ -117,6 +115,7 @@ async fn main() -> std::io::Result<()> {
                 redis_client: redis_client.clone(),
                 rabbitmq: rabbitmq_use.clone(),
             }))
+            .wrap(RateLimitMiddleware::new(100)) // 最大同时处理 100 个请求
             .route("/ws/{client_id}", web::get().to(websocket_register)) // WebSocket route
             .configure(router_handler::config)
             .wrap(cors)
