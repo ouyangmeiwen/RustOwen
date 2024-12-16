@@ -12,13 +12,16 @@ use std::time::Instant;
 pub struct RateLimitMiddleware {
     path_hits: Arc<Mutex<HashMap<String, (u64, Instant)>>>, // Wrap the Mutex in an Arc
     limit_per_second: u64,
+    time_window_secs: u64, // Added field for the time window
 }
 
 impl RateLimitMiddleware {
-    pub fn new(limit_per_second: u64) -> Self {
+    // Updated constructor to take time window as a parameter
+    pub fn new(limit_per_second: u64, time_window_secs: u64) -> Self {
         RateLimitMiddleware {
-            path_hits: Arc::new(Mutex::new(HashMap::new())), // Initialize with Arc<Mutex>
+            path_hits: Arc::new(Mutex::new(HashMap::new())),
             limit_per_second,
+            time_window_secs, // Initialize the time window
         }
     }
 }
@@ -39,14 +42,16 @@ where
             service,
             path_hits: Arc::clone(&self.path_hits), // Use Arc::clone to pass the reference
             limit_per_second: self.limit_per_second,
+            time_window_secs: self.time_window_secs, // Pass time window to service
         })
     }
 }
 
 pub struct RateLimitMiddlewareService<S> {
     service: S,
-    path_hits: Arc<Mutex<HashMap<String, (u64, Instant)>>>, // Arc<Mutex> shared across threads
+    path_hits: Arc<Mutex<HashMap<String, (u64, Instant)>>>,
     limit_per_second: u64,
+    time_window_secs: u64, // Store the time window in the service
 }
 
 impl<S, B> Service<ServiceRequest> for RateLimitMiddlewareService<S>
@@ -71,12 +76,15 @@ where
         let now = Instant::now();
         let (count, last_access_time) = path_hits.entry(path.clone()).or_insert((0, now));
 
-        if last_access_time.elapsed().as_secs() < 10 {
+        // Use the configured time window for rate limiting
+        if last_access_time.elapsed().as_secs() < self.time_window_secs {
             *count += 1;
         } else {
             *count = 1;
         }
-        println!("count:{}", *count);
+        println!("count: {}", *count);
+        println!("time_window_secs: {}", self.time_window_secs);
+        println!("limit_per_second: {}", self.limit_per_second);
 
         *last_access_time = now;
 
