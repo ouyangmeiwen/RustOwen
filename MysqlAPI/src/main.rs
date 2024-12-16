@@ -17,6 +17,7 @@ use models::config_model::Config;
 use utils::websockethelper::WebSocketHelper;
 
 use crate::models::static_model::*;
+//use actix_ratelimit::{MemoryStore, MemoryStoreActor, RateLimiter};
 use middlewares::jwt::JwtMiddleware;
 use models::appstate_model::AppState;
 use models::rabbitmq_model::RabbitMQ;
@@ -26,7 +27,6 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use test::a_testdemo;
 use tokio::sync::mpsc; // 异步版的 mpsc
-
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     a_testdemo::Test();
@@ -117,6 +117,11 @@ async fn main() -> std::io::Result<()> {
             .configure(router_handler::config)
             .wrap(cors)
             .wrap(Logger::default())
+        // .wrap(
+        //     RateLimiter::new(MemoryStoreActor::from(store.clone()).start())
+        //         .with_interval(Duration::from_secs(1))
+        //         .with_max_requests(1),
+        // )
         //.wrap(JwtMiddleware) // 应用 JWT 中间件
     })
     .bind(("0.0.0.0", port))?

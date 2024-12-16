@@ -41,4 +41,6 @@ lazy_static = "1.4"
 actix-rt = "2.5.0"         # Ensure you have actix-rt for async runtime
 actix-web-actors = "4.2.1" # 用于 WebSocket 支持
 actix = "0.13"             # 用于 Actor 和系统管理
-actix-limitation = "0.2"
+
+#actix-ratelimit = "0.3"       # Rate limiting middleware for Actix
+#openssl-sys = "0.9.104"
