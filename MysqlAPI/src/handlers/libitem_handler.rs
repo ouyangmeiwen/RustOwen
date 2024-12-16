@@ -33,7 +33,8 @@ pub async fn libitem_list_handler(
     let mut user_role = String::new();
     match check_auth(&req).await {
         Err(err) => {
-            return HttpResponse::Unauthorized().json(ApiResponse::<()>::error(&err.to_string()));
+            return HttpResponse::InternalServerError()
+                .json(ApiResponse::<()>::error(&err.to_string()));
         }
         Ok(claims) => {
             user_id = claims.user_id.to_string();

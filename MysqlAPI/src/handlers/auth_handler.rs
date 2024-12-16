@@ -1,11 +1,12 @@
 use crate::configs::envconfig::STATIC_CONFIG;
+use crate::handlers::base_handle::check_auth;
 use crate::models::apiresponse_model::ApiResponse;
 use crate::models::appstate_model::AppState;
 use crate::{
     models::claims_model::Claims, models::claims_model::TokenRequest,
     models::claims_model::TokenResponse, utils::jwt_utils::create_jwt,
 };
-use actix_web::{get, post, web, HttpResponse, Responder};
+use actix_web::{get, post, web, HttpRequest, HttpResponse, Responder};
 use chrono::Utc;
 use serde_json::json;
 /// 生成 JWT 的 Handler
@@ -14,7 +15,15 @@ use serde_json::json;
 pub async fn generate_token_handler(
     body: web::Json<TokenRequest>, // 通过请求体接收 user_id
     data: web::Data<AppState>,
+    req: HttpRequest, // 接收请求对象作为参数
 ) -> impl Responder {
+    match check_auth(&req).await {
+        Err(err) => {
+            return HttpResponse::InternalServerError()
+                .json(ApiResponse::<()>::error(&err.to_string()));
+        }
+        Ok(_) => {}
+    }
     let user_id = body.user_id.clone(); // 从请求体中提取 user_id
 
     let my_claims = Claims {
@@ -49,7 +58,16 @@ pub async fn generate_token_handler(
 pub async fn generate_token_get_handler(
     query: web::Query<TokenRequest>, // 通过请求体接收 user_id
     data: web::Data<AppState>,
+    req: HttpRequest, // 接收请求对象作为参数
 ) -> impl Responder {
+    match check_auth(&req).await {
+        Err(err) => {
+            return HttpResponse::InternalServerError()
+                .json(ApiResponse::<()>::error(&err.to_string()));
+        }
+        Ok(_) => {}
+    }
+
     let user_id = query.user_id.clone(); // 从请求体中提取 user_id
 
     let config = STATIC_CONFIG.read().unwrap(); //智能指针
