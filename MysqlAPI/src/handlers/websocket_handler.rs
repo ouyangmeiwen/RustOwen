@@ -1,3 +1,5 @@
+use crate::handlers::base_handle::check_auth;
+use crate::models::apiresponse_model::ApiResponse;
 use crate::utils::websockethelper::WebSocketHelper;
 use actix_web::error::{ErrorBadRequest, ErrorInternalServerError};
 use actix_web::{get, post, web, Error, HttpRequest, HttpResponse, Responder};
@@ -39,7 +41,22 @@ pub async fn websocket_register(
 async fn send_message_to_websocket_handler(
     client_id: web::Path<String>, // Client ID is passed as part of the URL path
     message: web::Json<String>,   // The message to send is passed as JSON in the body
+    req: HttpRequest,             // 接收请求对象作为参数
 ) -> impl Responder {
+    let mut user_id = String::new();
+    let mut user_role = String::new();
+    match check_auth(&req).await {
+        Err(err) => {
+            return HttpResponse::InternalServerError()
+                .json(ApiResponse::<()>::error(&err.to_string()));
+        }
+        Ok(claims) => {
+            user_id = claims.user_id.to_string();
+            println!("user_id:{}", &user_id);
+            user_role = claims.username.to_string();
+            println!("user_role:{}", &user_role);
+        }
+    }
     let client_id = client_id.into_inner(); // Extract client ID from URL path
     let message = message.into_inner(); // Extract message from the request body
                                         // Send the message to the specified client

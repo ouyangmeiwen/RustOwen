@@ -1,9 +1,10 @@
 use crate::{
+    handlers::base_handle::check_auth,
     models::{apiresponse_model::ApiResponse, appstate_model::AppState, note_model::NoteModel},
     schemas::note_schema::{CreateNoteSchema, FilterOptions, UpdateNoteSchema},
     utils::localtimeutils::NaiveDateTimeUtils,
 };
-use actix_web::{delete, get, patch, post, web, HttpResponse, Responder};
+use actix_web::{delete, get, patch, post, web, HttpRequest, HttpResponse, Responder};
 use chrono::prelude::*;
 use serde_json::json;
 use uuid::Uuid;
@@ -12,7 +13,22 @@ use uuid::Uuid;
 pub async fn note_list_handler(
     opts: web::Query<FilterOptions>,
     data: web::Data<AppState>,
+    req: HttpRequest, // 接收请求对象作为参数
 ) -> impl Responder {
+    let mut user_id = String::new();
+    let mut user_role = String::new();
+    match check_auth(&req).await {
+        Err(err) => {
+            return HttpResponse::InternalServerError()
+                .json(ApiResponse::<()>::error(&err.to_string()));
+        }
+        Ok(claims) => {
+            user_id = claims.user_id.to_string();
+            println!("user_id:{}", &user_id);
+            user_role = claims.username.to_string();
+            println!("user_role:{}", &user_role);
+        }
+    }
     let limit = opts.limit.unwrap_or(10);
     let offset = (opts.page.unwrap_or(1) - 1) * limit;
 
@@ -36,7 +52,22 @@ pub async fn note_list_handler(
 async fn create_note_handler(
     body: web::Json<CreateNoteSchema>,
     data: web::Data<AppState>,
+    req: HttpRequest, // 接收请求对象作为参数
 ) -> impl Responder {
+    let mut user_id = String::new();
+    let mut user_role = String::new();
+    match check_auth(&req).await {
+        Err(err) => {
+            return HttpResponse::InternalServerError()
+                .json(ApiResponse::<()>::error(&err.to_string()));
+        }
+        Ok(claims) => {
+            user_id = claims.user_id.to_string();
+            println!("user_id:{}", &user_id);
+            user_role = claims.username.to_string();
+            println!("user_role:{}", &user_role);
+        }
+    }
     let new_id = Uuid::new_v4().to_string(); // Generate new UUID
 
     // Insert new note
@@ -86,7 +117,22 @@ async fn create_note_handler(
 async fn get_note_handler(
     path: web::Path<String>, // `id` 作为 String 处理
     data: web::Data<AppState>,
+    req: HttpRequest, // 接收请求对象作为参数
 ) -> impl Responder {
+    let mut user_id = String::new();
+    let mut user_role = String::new();
+    match check_auth(&req).await {
+        Err(err) => {
+            return HttpResponse::InternalServerError()
+                .json(ApiResponse::<()>::error(&err.to_string()));
+        }
+        Ok(claims) => {
+            user_id = claims.user_id.to_string();
+            println!("user_id:{}", &user_id);
+            user_role = claims.username.to_string();
+            println!("user_role:{}", &user_role);
+        }
+    }
     let note_id = path.into_inner(); // 直接使用 String 类型的 `id`
     let query_result = sqlx::query_as!(
         NoteModel,
@@ -111,7 +157,22 @@ async fn edit_note_handler(
     path: web::Path<String>,
     body: web::Json<UpdateNoteSchema>,
     data: web::Data<AppState>,
+    req: HttpRequest, // 接收请求对象作为参数
 ) -> impl Responder {
+    let mut user_id = String::new();
+    let mut user_role = String::new();
+    match check_auth(&req).await {
+        Err(err) => {
+            return HttpResponse::InternalServerError()
+                .json(ApiResponse::<()>::error(&err.to_string()));
+        }
+        Ok(claims) => {
+            user_id = claims.user_id.to_string();
+            println!("user_id:{}", &user_id);
+            user_role = claims.username.to_string();
+            println!("user_role:{}", &user_role);
+        }
+    }
     let note_id = path.into_inner(); // 直接使用 String 类型的 `id`
 
     // 查询现有的记录
@@ -178,7 +239,25 @@ async fn edit_note_handler(
     }
 }
 #[delete("/notes/{id}")]
-async fn delete_note_handler(path: web::Path<String>, data: web::Data<AppState>) -> impl Responder {
+async fn delete_note_handler(
+    path: web::Path<String>,
+    data: web::Data<AppState>,
+    req: HttpRequest, // 接收请求对象作为参数
+) -> impl Responder {
+    let mut user_id = String::new();
+    let mut user_role = String::new();
+    match check_auth(&req).await {
+        Err(err) => {
+            return HttpResponse::InternalServerError()
+                .json(ApiResponse::<()>::error(&err.to_string()));
+        }
+        Ok(claims) => {
+            user_id = claims.user_id.to_string();
+            println!("user_id:{}", &user_id);
+            user_role = claims.username.to_string();
+            println!("user_role:{}", &user_role);
+        }
+    }
     let note_id = path.into_inner(); // 直接使用 String 类型的 `id`
     let rows_affected = sqlx::query!("DELETE FROM notes WHERE id = ?", note_id)
         .execute(&data.db)

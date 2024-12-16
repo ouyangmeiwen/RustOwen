@@ -125,7 +125,22 @@ pub async fn libitem_list_handler(
 async fn create_libitem_handler(
     body: web::Json<CreateLibItemSchema>,
     data: web::Data<AppState>,
+    req: HttpRequest, // 接收请求对象作为参数
 ) -> impl Responder {
+    let mut user_id = String::new();
+    let mut user_role = String::new();
+    match check_auth(&req).await {
+        Err(err) => {
+            return HttpResponse::InternalServerError()
+                .json(ApiResponse::<()>::error(&err.to_string()));
+        }
+        Ok(claims) => {
+            user_id = claims.user_id.to_string();
+            println!("user_id:{}", &user_id);
+            user_role = claims.username.to_string();
+            println!("user_role:{}", &user_role);
+        }
+    }
     let new_id = Uuid::new_v4().to_string().replace("-", ""); // 去掉破折号
     let empty_string = "".to_string(); // 提前创建一个 String
     let now: NaiveDateTime = NaiveDateTimeUtils::now_local();
@@ -189,7 +204,25 @@ async fn create_libitem_handler(
 
 // Get libitem by id
 #[get("/libitems/{id}")]
-async fn get_libitem_handler(path: web::Path<String>, data: web::Data<AppState>) -> impl Responder {
+async fn get_libitem_handler(
+    path: web::Path<String>,
+    data: web::Data<AppState>,
+    req: HttpRequest, // 接收请求对象作为参数
+) -> impl Responder {
+    let mut user_id = String::new();
+    let mut user_role = String::new();
+    match check_auth(&req).await {
+        Err(err) => {
+            return HttpResponse::InternalServerError()
+                .json(ApiResponse::<()>::error(&err.to_string()));
+        }
+        Ok(claims) => {
+            user_id = claims.user_id.to_string();
+            println!("user_id:{}", &user_id);
+            user_role = claims.username.to_string();
+            println!("user_role:{}", &user_role);
+        }
+    }
     let libitem_id = path.into_inner();
     let query_result = sqlx::query_as!(
         LibItemModel,
@@ -212,7 +245,22 @@ async fn get_libitem_handler(path: web::Path<String>, data: web::Data<AppState>)
 async fn get_item_bybarcode_handle(
     path: web::Path<String>,
     data: web::Data<AppState>,
+    req: HttpRequest, // 接收请求对象作为参数
 ) -> impl Responder {
+    let mut user_id = String::new();
+    let mut user_role = String::new();
+    match check_auth(&req).await {
+        Err(err) => {
+            return HttpResponse::InternalServerError()
+                .json(ApiResponse::<()>::error(&err.to_string()));
+        }
+        Ok(claims) => {
+            user_id = claims.user_id.to_string();
+            println!("user_id:{}", &user_id);
+            user_role = claims.username.to_string();
+            println!("user_role:{}", &user_role);
+        }
+    }
     let barcode = path.into_inner();
     let item_query = sqlx::query_as!(
         LibItemModel,
@@ -233,7 +281,22 @@ async fn edit_libitem_handler(
     path: web::Path<String>,
     body: web::Json<UpdateLibItemSchema>,
     data: web::Data<AppState>,
+    req: HttpRequest, // 接收请求对象作为参数
 ) -> impl Responder {
+    let mut user_id = String::new();
+    let mut user_role = String::new();
+    match check_auth(&req).await {
+        Err(err) => {
+            return HttpResponse::InternalServerError()
+                .json(ApiResponse::<()>::error(&err.to_string()));
+        }
+        Ok(claims) => {
+            user_id = claims.user_id.to_string();
+            println!("user_id:{}", &user_id);
+            user_role = claims.username.to_string();
+            println!("user_role:{}", &user_role);
+        }
+    }
     let libitem_id = path.into_inner();
 
     let query_result = sqlx::query_as!(
@@ -360,7 +423,22 @@ async fn edit_libitem_handler(
 async fn delete_libitem_handler(
     path: web::Path<String>,
     data: web::Data<AppState>,
+    req: HttpRequest, // 接收请求对象作为参数
 ) -> impl Responder {
+    let mut user_id = String::new();
+    let mut user_role = String::new();
+    match check_auth(&req).await {
+        Err(err) => {
+            return HttpResponse::InternalServerError()
+                .json(ApiResponse::<()>::error(&err.to_string()));
+        }
+        Ok(claims) => {
+            user_id = claims.user_id.to_string();
+            println!("user_id:{}", &user_id);
+            user_role = claims.username.to_string();
+            println!("user_role:{}", &user_role);
+        }
+    }
     let libitem_id = path.into_inner();
     let rows_affected = sqlx::query!("DELETE FROM libitem WHERE id = ?", libitem_id)
         .execute(&data.db)
@@ -382,7 +460,22 @@ async fn delete_libitem_handler(
 pub async fn import_libitem_handler(
     body: web::Json<ItemsExcelImportInput>,
     data: web::Data<AppState>,
+    req: HttpRequest, // 接收请求对象作为参数
 ) -> impl Responder {
+    let mut user_id = String::new();
+    let mut user_role = String::new();
+    match check_auth(&req).await {
+        Err(err) => {
+            return HttpResponse::InternalServerError()
+                .json(ApiResponse::<()>::error(&err.to_string()));
+        }
+        Ok(claims) => {
+            user_id = claims.user_id.to_string();
+            println!("user_id:{}", &user_id);
+            user_role = claims.username.to_string();
+            println!("user_role:{}", &user_role);
+        }
+    }
     println!("导入参数{:?}", body);
     if FileUtils::exists(&body.Path) {
         match open_workbook_auto(&body.Path) {
