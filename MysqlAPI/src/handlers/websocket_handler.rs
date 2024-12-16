@@ -5,7 +5,7 @@ use actix_web_actors::ws;
 use log::info;
 
 //ws://127.0.0.1:7788/ws/sm_01   postman
-pub async fn websocket_register_handler(
+pub async fn websocket_register(
     req: HttpRequest,
     stream: web::Payload,
 ) -> Result<HttpResponse, Error> {
@@ -48,10 +48,9 @@ async fn send_message_to_websocket_handler(
     } else if client_id.to_string().starts_with("group_") {
         WebSocketHelper::send_message_to_group_client(
             client_id
-                .to_string()
                 .strip_prefix("group_")
-                .unwrap()
-                .to_string(),
+                .expect("client_id should start with 'group_'")
+                .to_owned(),
             message,
         );
     } else {
