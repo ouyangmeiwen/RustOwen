@@ -4,11 +4,11 @@
       "time_window_secs": 10
     },
     "/api/token": {
-      "limit_per_second": 1,
+      "limit_per_second": 100,
       "time_window_secs": 3600
     },
     "/api/tokenget": {
-      "limit_per_second": 1,
+      "limit_per_second": 100,
       "time_window_secs": 3600
     }
   }
