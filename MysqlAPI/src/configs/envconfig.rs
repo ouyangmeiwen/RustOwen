@@ -2,7 +2,7 @@ use crate::models::config_model::Config;
 use dotenv::dotenv;
 use lazy_static::lazy_static;
 use std::env;
-use std::sync::Mutex;
+use std::sync::RwLock;
 impl Config {
     pub fn new() -> Config {
         dotenv().ok(); // 加载 .env 文件
@@ -52,5 +52,5 @@ impl Config {
 }
 lazy_static! {
     // 使用 Mutex 包裹 Config，确保线程安全
-    pub static ref STATIC_CONFIG: Mutex<Config> = Mutex::new(Config::new());
+    pub static ref STATIC_CONFIG: RwLock<Config> = RwLock::new(Config::new());
 }

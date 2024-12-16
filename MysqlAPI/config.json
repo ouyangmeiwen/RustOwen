@@ -1,0 +1,11 @@
+{
+    "/api/libitems": {
+      "limit_per_second": 5,
+      "time_window_secs": 10
+    },
+    "/path2": {
+      "limit_per_second": 10,
+      "time_window_secs": 120
+    }
+  }
+  

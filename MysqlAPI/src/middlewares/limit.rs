@@ -8,6 +8,8 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
+use crate::configs::ratelimitconfig::GLOBAL_PATH_LIMITS;
+
 #[derive(Clone)] // Derive Clone for RateLimitMiddleware
 pub struct RateLimitMiddleware {
     path_hits: Arc<Mutex<HashMap<String, (u64, Instant)>>>, // Wrap the Mutex in an Arc
@@ -76,19 +78,37 @@ where
         let now = Instant::now();
         let (count, last_access_time) = path_hits.entry(path.clone()).or_insert((0, now));
 
+        // let global_limits = GLOBAL_PATH_LIMITS.read().unwrap();
+        // // 打印 GLOBAL_PATH_LIMITS 的所有内容
+        // println!("GLOBAL_PATH_LIMITS: {:?}", *global_limits);
+
+        // Get the per-path rate limit configuration or fallback to the default
+        let (limit_per_second, time_window_secs) = GLOBAL_PATH_LIMITS
+            .read()
+            .unwrap()
+            .get(&path)
+            .cloned()
+            .unwrap_or((self.limit_per_second, self.time_window_secs));
+
+        // 打印当前路径的速率限制配置
+        println!(
+            "Path: {}, Limit per second: {}, Time window (secs): {}",
+            path, limit_per_second, time_window_secs
+        );
+
         // Use the configured time window for rate limiting
-        if last_access_time.elapsed().as_secs() < self.time_window_secs {
+        if last_access_time.elapsed().as_secs() < time_window_secs {
             *count += 1;
         } else {
             *count = 1;
         }
         println!("count: {}", *count);
-        println!("time_window_secs: {}", self.time_window_secs);
-        println!("limit_per_second: {}", self.limit_per_second);
+        println!("time_window_secs: {}", time_window_secs);
+        println!("limit_per_second: {}", limit_per_second);
 
         *last_access_time = now;
 
-        if *count > self.limit_per_second {
+        if *count > limit_per_second {
             req.extensions_mut().insert(HashMap::<&str, String>::from([(
                 "rate_limit_exceeded",
                 "true".to_string(),

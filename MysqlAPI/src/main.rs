@@ -32,7 +32,7 @@ use tokio::sync::mpsc; // 异步版的 mpsc
 async fn main() -> std::io::Result<()> {
     a_testdemo::Test();
     dotenv().ok();
-    let config: Config = STATIC_CONFIG.lock().unwrap().clone(); //智能指针
+    let config: Config = STATIC_CONFIG.read().unwrap().clone(); //智能指针
     let log_level = config.log_level.clone(); // 获取日志级别配置
     if std::env::var_os("RUST_LOG").is_none() {
         std::env::set_var("RUST_LOG", log_level);
@@ -67,7 +67,7 @@ async fn main() -> std::io::Result<()> {
     if !rabbitmq_uri.clone().is_empty() {
         // 这里初始化静态变量，将配置中的值存储到全局变量
         // 锁住 Mutex 来修改静态变量
-        let mut received_key = RABBITMQ_ROUTING_EXCHANGE.lock().unwrap();
+        let mut received_key = RABBITMQ_ROUTING_EXCHANGE.write().unwrap();
         *received_key = config.rabbitmq_exchange.clone();
 
         // 创建 RabbitMQ 实例，并打印错误信息

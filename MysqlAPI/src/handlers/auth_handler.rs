@@ -52,7 +52,7 @@ pub async fn generate_token_get_handler(
 ) -> impl Responder {
     let user_id = query.user_id.clone(); // 从请求体中提取 user_id
 
-    let config = STATIC_CONFIG.lock().unwrap(); //智能指针
+    let config = STATIC_CONFIG.read().unwrap(); //智能指针
     println!("Database URL: {}", config.database_url);
     println!("Port: {}", config.port);
     println!("Log Level: {}", config.log_level);

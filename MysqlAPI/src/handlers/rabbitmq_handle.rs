@@ -13,7 +13,7 @@ pub async fn sendmsg_post_rabbitmq_handle(
     // 发布者
     match data.rabbitmq.as_ref() {
         Some(rabbitmq) => {
-            let exchange = RABBITMQ_ROUTING_EXCHANGE.lock().unwrap();
+            let exchange = RABBITMQ_ROUTING_EXCHANGE.read().unwrap();
             match rabbitmq
                 .publish(&exchange, &body.routing_key, &body.msg)
                 .await
@@ -49,7 +49,7 @@ pub async fn sendmsg_get_rabbitmq_handle(
 ) -> impl Responder {
     // 发布者
     if let Some(rabbitmq) = data.rabbitmq.as_ref() {
-        let exchange = RABBITMQ_ROUTING_EXCHANGE.lock().unwrap();
+        let exchange = RABBITMQ_ROUTING_EXCHANGE.read().unwrap();
         match rabbitmq
             .publish(&exchange, &query.routing_key, &query.msg)
             .await
