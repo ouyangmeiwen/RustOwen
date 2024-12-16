@@ -35,6 +35,15 @@ impl Config {
         let rabbitmq_routing_key_revceived = env::var("RABBITMQ_ROUTING_KEY_RECEIVED")
             .expect("RABBITMQ_ROUTING_KEY_RECEIVED must be set in .env file");
 
+        let limit_per_second_default = env::var("LIMIT_PER_SECOND_DEFAULT")
+            .expect("LIMIT_PER_SECOND_DEFAULT must be set in .env file")
+            .parse()
+            .expect("LIMIT_PER_SECOND_DEFAULT must be a valid u64");
+
+        let time_window_secs_default = env::var("TIME_WINDOW_SECS_DEFAULT")
+            .expect("TIME_WINDOW_SECS_DEFAULT must be set in .env file")
+            .parse()
+            .expect("TIME_WINDOW_SECS_DEFAULT must be a valid u64");
         Config {
             database_url,
             port,
@@ -47,6 +56,8 @@ impl Config {
             rabbitmq_queue,
             rabbitmq_routing_key_send,
             rabbitmq_routing_key_revceived,
+            limit_per_second_default,
+            time_window_secs_default,
         }
     }
 }

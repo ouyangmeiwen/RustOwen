@@ -98,8 +98,14 @@ async fn main() -> std::io::Result<()> {
         });
     }
     // Set the rate limit (e.g., 10 requests per second)
-    let rate_limit_middleware: RateLimitMiddleware = RateLimitMiddleware::new(100, 10);
-
+    let rate_limit_middleware: RateLimitMiddleware = RateLimitMiddleware::new(
+        config.limit_per_second_default,
+        config.time_window_secs_default,
+    );
+    println!(
+        "start api limit:{}/{}",
+        config.limit_per_second_default, config.time_window_secs_default
+    );
     HttpServer::new(move || {
         let cors: Cors = Cors::default()
             .allowed_origin(&config.cors_allowed_origin) // 直接使用 config

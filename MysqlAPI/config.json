@@ -1,6 +1,6 @@
 {
     "/api/libitems": {
-      "limit_per_second": 5,
+      "limit_per_second": 50,
       "time_window_secs": 10
     },
     "/api/token": {

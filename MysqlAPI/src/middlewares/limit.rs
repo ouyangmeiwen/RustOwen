@@ -13,17 +13,17 @@ use crate::configs::ratelimitconfig::GLOBAL_PATH_LIMITS;
 #[derive(Clone)] // Derive Clone for RateLimitMiddleware
 pub struct RateLimitMiddleware {
     path_hits: Arc<Mutex<HashMap<String, (u64, Instant)>>>, // Wrap the Mutex in an Arc
-    limit_per_second: u64,
-    time_window_secs: u64, // Added field for the time window
+    limit_per_second_default: u64,
+    time_window_secs_default: u64, // Added field for the time window
 }
 
 impl RateLimitMiddleware {
     // Updated constructor to take time window as a parameter
-    pub fn new(limit_per_second: u64, time_window_secs: u64) -> Self {
+    pub fn new(limit_per_second_default: u64, time_window_secs_default: u64) -> Self {
         RateLimitMiddleware {
             path_hits: Arc::new(Mutex::new(HashMap::new())),
-            limit_per_second,
-            time_window_secs, // Initialize the time window
+            limit_per_second_default,
+            time_window_secs_default, // Initialize the time window
         }
     }
 }
@@ -43,8 +43,8 @@ where
         ok(RateLimitMiddlewareService {
             service,
             path_hits: Arc::clone(&self.path_hits), // Use Arc::clone to pass the reference
-            limit_per_second: self.limit_per_second,
-            time_window_secs: self.time_window_secs, // Pass time window to service
+            limit_per_second_default: self.limit_per_second_default,
+            time_window_secs_default: self.time_window_secs_default, // Pass time window to service
         })
     }
 }
@@ -52,8 +52,8 @@ where
 pub struct RateLimitMiddlewareService<S> {
     service: S,
     path_hits: Arc<Mutex<HashMap<String, (u64, Instant)>>>,
-    limit_per_second: u64,
-    time_window_secs: u64, // Store the time window in the service
+    limit_per_second_default: u64,
+    time_window_secs_default: u64, // Store the time window in the service
 }
 
 impl<S, B> Service<ServiceRequest> for RateLimitMiddlewareService<S>
@@ -88,13 +88,7 @@ where
             .unwrap()
             .get(&path)
             .cloned()
-            .unwrap_or((self.limit_per_second, self.time_window_secs));
-
-        // 打印当前路径的速率限制配置
-        println!(
-            "Path: {}, Limit per second: {}, Time window (secs): {}",
-            path, limit_per_second, time_window_secs
-        );
+            .unwrap_or((self.limit_per_second_default, self.time_window_secs_default));
 
         // Use the configured time window for rate limiting
         if last_access_time.elapsed().as_secs() < time_window_secs {
@@ -102,10 +96,11 @@ where
         } else {
             *count = 1;
         }
-        println!("count: {}", *count);
-        println!("time_window_secs: {}", time_window_secs);
-        println!("limit_per_second: {}", limit_per_second);
-
+        // 打印当前路径的速率限制配置
+        println!(
+            "Path: {},current:{}, Limit: {}/{}s",
+            path, *count, limit_per_second, time_window_secs
+        );
         *last_access_time = now;
 
         if *count > limit_per_second {
