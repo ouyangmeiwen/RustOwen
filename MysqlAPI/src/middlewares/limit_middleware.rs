@@ -22,8 +22,10 @@ use serde::Deserialize;
 use serde_json::json;
 use std::collections::HashMap;
 use std::env;
+use std::net::SocketAddr;
 use std::task::{Context, Poll};
 use std::time::Instant; // 使用 async-std 的异步 Mutex
+
 #[derive(Clone)] // Derive Clone for RateLimitMiddleware
 pub struct RateLimitMiddleware {
     path_hits: Arc<Mutex<HashMap<String, (u64, Instant)>>>, // Wrap the Mutex in an Arc
@@ -93,7 +95,12 @@ where
         let path_hits = Arc::clone(&self.path_hits);
 
         let path = req.path().to_string();
-        // 获取路径的速率限制配置，若无配置则使用默认值
+        // 获取客户端IP地址，如果有代理，则尝试从 X-Forwarded-For 中获取
+        let client_ip = get_client_ip(&req);
+        let key = format!("{}:{}", client_ip, path); // 使用IP+路径作为key
+                                                     // 获取路径的速率限制配置，若无配置则使用默认值
+                                                     // 打印当前路径的速率限制配置
+        println!("key:{}", key);
         let (limit_per_second, time_window_secs) = GLOBAL_PATH_LIMITS
             .read()
             .unwrap()
@@ -105,6 +112,10 @@ where
             let mut path_hits = path_hits.lock().await; // 使用 `.await` 获取锁
             let now = Instant::now();
             let (count, last_access_time) = path_hits.entry(path.clone()).or_insert((0, now));
+
+            // 在path_hits中使用 client_ip + path 作为键 这样就可以根据IP进行限制
+            //let (count, last_access_time) = path_hits.entry(key.clone()).or_insert((0, now));
+
             // 判断是否超出请求限制
             if last_access_time.elapsed().as_secs() < time_window_secs {
                 *count += 1;
@@ -134,4 +145,27 @@ where
             svc.call(req).await.map(ServiceResponse::map_into_left_body)
         })
     }
+}
+// Utility function to get client IP, considering proxy headers
+
+fn get_client_ip(req: &ServiceRequest) -> String {
+    // 如果 X-Forwarded-For 存在，则取第一个 IP
+    if let Some(ip) = req.headers().get("X-Forwarded-For") {
+        if let Ok(ip_str) = ip.to_str() {
+            return ip_str
+                .split(',')
+                .next()
+                .unwrap_or_default()
+                .trim()
+                .to_string();
+        }
+    }
+
+    // 如果没有 X-Forwarded-For 头，则使用 peer_addr 获取客户端 IP
+    if let Some(peer_addr) = req.connection_info().peer_addr() {
+        return peer_addr.to_string(); // 这里确保我们正确调用了 ip() 方法
+    }
+
+    // 如果没有获取到 IP，返回空字符串
+    String::new()
 }
