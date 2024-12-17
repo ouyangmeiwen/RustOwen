@@ -111,6 +111,11 @@ where
             } else {
                 *count = 1;
             }
+            // 打印当前路径的速率限制配置
+            println!(
+                "Path: {},current:{}, Limit: {}/{}s",
+                path, *count, limit_per_second, time_window_secs
+            );
             *last_access_time = now;
 
             // 超出限制时返回 429 Too Many Requests
