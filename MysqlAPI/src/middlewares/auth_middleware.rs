@@ -97,13 +97,13 @@ where
                 let config: Config = STATIC_CONFIG.read().unwrap().clone(); //智能指针
                 let secret = &config.secret_key;
                 println!("secret:{}", secret);
+                let mut flags: HashMap<&str, String> = HashMap::new();
                 // 解码 JWT，获取 Claims
                 if let Ok(decoded_token) = decode::<Claims>(
                     token,
                     &DecodingKey::from_secret(secret.as_ref()),
                     &Validation::default(),
                 ) {
-                    let mut flags: HashMap<&str, String> = HashMap::new();
                     flags.insert("user_id", decoded_token.claims.user_id.to_string()); //remove
                     println!("user_id:{}", decoded_token.claims.user_id.to_string());
                     flags.insert("user_role", decoded_token.claims.role.to_string()); //remove
@@ -111,8 +111,10 @@ where
                     req.extensions_mut().insert(flags); // 将 HashMap 插入到扩展字段中
                     svc.call(req).await.map(ServiceResponse::map_into_left_body)
                 } else {
-                    // req.extensions_mut().insert("identity");
-                    // svc.call(req).await.map(ServiceResponse::map_into_left_body)
+                    flags.insert("auth_failed", "true".to_string());
+                    req.extensions_mut().insert(flags); // 将 HashMap 插入到扩展字段中
+
+                    //svc.call(req).await.map(ServiceResponse::map_into_left_body)
                     return Ok(req.into_response(
                         HttpResponse::Unauthorized()
                             .json(ApiResponse::<()>::error("Unauthorized"))
