@@ -11,16 +11,16 @@ use std::time::Instant;
 use crate::configs::ratelimitconfig::GLOBAL_PATH_LIMITS;
 
 #[derive(Clone)] // Derive Clone for RateLimitMiddleware
-pub struct RateLimitMiddleware {
+pub struct LimitMiddleware {
     path_hits: Arc<Mutex<HashMap<String, (u64, Instant)>>>, // Wrap the Mutex in an Arc
     limit_per_second_default: u64,
     time_window_secs_default: u64, // Added field for the time window
 }
 
-impl RateLimitMiddleware {
+impl LimitMiddleware {
     // Updated constructor to take time window as a parameter
     pub fn new(limit_per_second_default: u64, time_window_secs_default: u64) -> Self {
-        RateLimitMiddleware {
+        LimitMiddleware {
             path_hits: Arc::new(Mutex::new(HashMap::new())),
             limit_per_second_default,
             time_window_secs_default, // Initialize the time window
@@ -28,19 +28,19 @@ impl RateLimitMiddleware {
     }
 }
 
-impl<S, B> Transform<S, ServiceRequest> for RateLimitMiddleware
+impl<S, B> Transform<S, ServiceRequest> for LimitMiddleware
 where
     S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
     S::Future: 'static,
 {
     type Response = ServiceResponse<B>;
     type Error = Error;
-    type Transform = RateLimitMiddlewareService<S>;
+    type Transform = LimitMiddlewareService<S>;
     type InitError = ();
     type Future = Ready<Result<Self::Transform, Self::InitError>>;
 
     fn new_transform(&self, service: S) -> Self::Future {
-        ok(RateLimitMiddlewareService {
+        ok(LimitMiddlewareService {
             service,
             path_hits: Arc::clone(&self.path_hits), // Use Arc::clone to pass the reference
             limit_per_second_default: self.limit_per_second_default,
@@ -49,14 +49,14 @@ where
     }
 }
 
-pub struct RateLimitMiddlewareService<S> {
+pub struct LimitMiddlewareService<S> {
     service: S,
     path_hits: Arc<Mutex<HashMap<String, (u64, Instant)>>>,
     limit_per_second_default: u64,
     time_window_secs_default: u64, // Store the time window in the service
 }
 
-impl<S, B> Service<ServiceRequest> for RateLimitMiddlewareService<S>
+impl<S, B> Service<ServiceRequest> for LimitMiddlewareService<S>
 where
     S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
     S::Future: 'static,

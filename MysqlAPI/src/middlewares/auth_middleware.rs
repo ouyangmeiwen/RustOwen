@@ -106,7 +106,7 @@ where
                     flags.insert("user_id", decoded_token.claims.user_id.to_string()); //remove
                     println!("user_id:{}", decoded_token.claims.user_id.to_string());
                     flags.insert("user_role", decoded_token.claims.role.to_string()); //remove
-                    println!("user_role:{}", decoded_token.claims.role.to_string());
+                    println!("user_role:{}", decoded_token.claims.user_id.to_string());
                     req.extensions_mut().insert(flags); // 将 HashMap 插入到扩展字段中
                     svc.call(req).await.map(ServiceResponse::map_into_left_body)
                 } else {

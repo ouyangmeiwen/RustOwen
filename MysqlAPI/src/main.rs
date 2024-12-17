@@ -14,7 +14,7 @@ use configs::envconfig::STATIC_CONFIG;
 use dotenv::dotenv;
 use log::info;
 use middlewares::auth_middleware::Auth;
-use middlewares::limit::RateLimitMiddleware;
+use middlewares::limit_middleware::RateLimitMiddleware;
 use models::config_model::Config;
 use utils::websockethelper::WebSocketHelper;
 
