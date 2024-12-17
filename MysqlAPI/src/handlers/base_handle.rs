@@ -25,9 +25,11 @@ pub async fn check_auth(req: &HttpRequest) -> Result<Claims, actix_web::Error> {
         let mut claims = Claims::default();
         if let Some(user_id) = flags.get("user_id") {
             claims.user_id = user_id.to_string();
+            println!("user_id:{}", user_id.to_string());
         }
         if let Some(user_role) = flags.get("user_role") {
-            claims.user_id = user_role.to_string();
+            claims.role = user_role.to_string();
+            println!("user_role:{}", user_role.to_string());
         }
 
         return Ok(claims);

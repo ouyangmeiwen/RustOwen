@@ -91,9 +91,11 @@ where
                         HttpResponse::Unauthorized().finish().map_into_right_body(),
                     ));
                 }
-                let token = parts[0];
+                let token = parts[1];
+                println!("token:{}", token);
                 let config: Config = STATIC_CONFIG.read().unwrap().clone(); //智能指针
                 let secret = &config.secret_key;
+                println!("secret:{}", secret);
                 // 解码 JWT，获取 Claims
                 if let Ok(decoded_token) = decode::<Claims>(
                     token,
@@ -102,7 +104,9 @@ where
                 ) {
                     let mut flags: HashMap<&str, String> = HashMap::new();
                     flags.insert("user_id", decoded_token.claims.user_id.to_string()); //remove
+                    println!("user_id:{}", decoded_token.claims.user_id.to_string());
                     flags.insert("user_role", decoded_token.claims.role.to_string()); //remove
+                    println!("user_role:{}", decoded_token.claims.role.to_string());
                     req.extensions_mut().insert(flags); // 将 HashMap 插入到扩展字段中
                     svc.call(req).await.map(ServiceResponse::map_into_left_body)
                 } else {
