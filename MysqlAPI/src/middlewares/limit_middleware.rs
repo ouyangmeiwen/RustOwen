@@ -11,6 +11,7 @@ use futures::Future;
 
 use crate::configs::envconfig::STATIC_CONFIG;
 use crate::configs::ratelimitconfig::GLOBAL_PATH_LIMITS;
+use crate::models::apiresponse_model::ApiResponse;
 use crate::models::claims_model::Claims;
 use crate::models::config_model::Config;
 use actix_web::http::header::{self, HeaderName, HeaderValue};
@@ -18,6 +19,7 @@ use futures::future::{ok, LocalBoxFuture, Ready};
 use jsonwebtoken::{decode, DecodingKey, Validation};
 use regex::Regex;
 use serde::Deserialize;
+use serde_json::json;
 use std::collections::HashMap;
 use std::env;
 use std::task::{Context, Poll};
@@ -119,7 +121,7 @@ where
                 )]));
                 return Ok(req.into_response(
                     HttpResponse::TooManyRequests()
-                        .finish()
+                        .json(ApiResponse::<()>::error("TooManyRequests"))
                         .map_into_right_body(),
                 ));
             }

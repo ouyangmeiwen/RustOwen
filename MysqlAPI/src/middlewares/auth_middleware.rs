@@ -9,6 +9,7 @@ use actix_web::{Error, HttpMessage, HttpResponse};
 use futures::Future;
 
 use crate::configs::envconfig::STATIC_CONFIG;
+use crate::models::apiresponse_model::ApiResponse;
 use crate::models::claims_model::Claims;
 use crate::models::config_model::Config;
 use actix_web::http::header::{self, HeaderName, HeaderValue};
@@ -113,7 +114,9 @@ where
                     // req.extensions_mut().insert("identity");
                     // svc.call(req).await.map(ServiceResponse::map_into_left_body)
                     return Ok(req.into_response(
-                        HttpResponse::Unauthorized().finish().map_into_right_body(),
+                        HttpResponse::Unauthorized()
+                            .json(ApiResponse::<()>::error("Unauthorized"))
+                            .map_into_right_body(),
                     ));
                 }
             }
