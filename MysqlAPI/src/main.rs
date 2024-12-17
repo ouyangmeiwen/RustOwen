@@ -13,6 +13,7 @@ use actix_web::{http::header, web, App, HttpServer};
 use configs::envconfig::STATIC_CONFIG;
 use dotenv::dotenv;
 use log::info;
+use middlewares::auth_middleware::Auth;
 use middlewares::limit::RateLimitMiddleware;
 use models::config_model::Config;
 use utils::websockethelper::WebSocketHelper;
@@ -127,6 +128,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(cors)
             .wrap(rate_limit_middleware.clone()) // Inject the middleware into the app
             .wrap(Logger::default())
+        //.wrap(Auth {}) // Wrap the Auth middleware here
         //.wrap(JwtMiddleware) // 应用 JWT 中间件
         // .wrap(
         //     RateLimiter::new(MemoryStoreActor::from(store.clone()).start())
