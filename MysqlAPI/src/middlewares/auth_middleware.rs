@@ -8,6 +8,16 @@ use actix_web::dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Tr
 use actix_web::{Error, HttpMessage, HttpResponse};
 use futures::Future;
 
+use crate::models::claims_model::Claims;
+use actix_web::http::header::{self, HeaderName, HeaderValue};
+use futures::future::{ok, LocalBoxFuture, Ready};
+use jsonwebtoken::{decode, DecodingKey, Validation};
+use regex::Regex;
+use serde::Deserialize;
+use std::collections::HashMap;
+use std::env;
+use std::task::{Context, Poll};
+
 pub struct Auth {}
 
 impl<S: 'static, B> Transform<S, ServiceRequest> for Auth
@@ -67,8 +77,26 @@ where
                     req.into_response(HttpResponse::Unauthorized().finish().map_into_right_body())
                 );
             }
-            req.extensions_mut().insert("identity");
-            svc.call(req).await.map(ServiceResponse::map_into_left_body)
+            let token = parts[0];
+            let secret = std::env::var("SECRET_KEY").expect("SECRET_KEY must be set");
+            // 解码 JWT，获取 Claims
+            if let Ok(decoded_token) = decode::<Claims>(
+                token,
+                &DecodingKey::from_secret(secret.as_ref()),
+                &Validation::default(),
+            ) {
+                let mut flags: HashMap<&str, String> = HashMap::new();
+                flags.insert("user_id", decoded_token.claims.user_id.to_string()); //remove
+                flags.insert("user_role", decoded_token.claims.role.to_string()); //remove
+                req.extensions_mut().insert(flags); // 将 HashMap 插入到扩展字段中
+                svc.call(req).await.map(ServiceResponse::map_into_left_body)
+            } else {
+                // req.extensions_mut().insert("identity");
+                // svc.call(req).await.map(ServiceResponse::map_into_left_body)
+                return Ok(
+                    req.into_response(HttpResponse::Unauthorized().finish().map_into_right_body())
+                );
+            }
         })
     }
 }
