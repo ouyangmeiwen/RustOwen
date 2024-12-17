@@ -14,6 +14,7 @@ use configs::envconfig::STATIC_CONFIG;
 use dotenv::dotenv;
 use log::info;
 use middlewares::auth_middleware::Auth;
+use middlewares::limit::LimitMiddleware;
 use middlewares::limit_middleware::RateLimitMiddleware;
 use models::config_model::Config;
 use utils::websockethelper::WebSocketHelper;
@@ -103,6 +104,10 @@ async fn main() -> std::io::Result<()> {
         config.limit_per_second_default,
         config.time_window_secs_default,
     );
+    // let limit_middleware: LimitMiddleware = LimitMiddleware::new(
+    //     config.limit_per_second_default,
+    //     config.time_window_secs_default,
+    // );
     println!(
         "start api limit:{}/{}",
         config.limit_per_second_default, config.time_window_secs_default
@@ -127,14 +132,10 @@ async fn main() -> std::io::Result<()> {
             .configure(router_handler::config)
             .wrap(cors)
             .wrap(rate_limit_middleware.clone()) // Inject the middleware into the app
+            //.wrap(limit_middleware.clone()) // Inject the middleware into the app
             .wrap(Logger::default())
-            .wrap(Auth {}) // Wrap the Auth middleware here
-                           //.wrap(JwtMiddleware) // 应用 JWT 中间件
-                           // .wrap(
-                           //     RateLimiter::new(MemoryStoreActor::from(store.clone()).start())
-                           //         .with_interval(Duration::from_secs(1))
-                           //         .with_max_requests(1),
-                           // )
+            .wrap(Auth {})
+        //.wrap(JwtMiddleware) // 应用 JWT 中间件
     })
     .bind(("0.0.0.0", port))?
     .shutdown_timeout(30) // 设置优雅关闭的超时，单位是秒
