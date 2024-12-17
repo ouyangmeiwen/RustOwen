@@ -5,6 +5,7 @@ pub struct Config {
     pub cors_allowed_origin: String,
     pub max_connections: u32,
     pub log_level: String,
+    pub secret_key: String,
     pub redis_url: String,
 
     pub rabbitmq_uri: String,

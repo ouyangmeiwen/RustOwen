@@ -8,7 +8,9 @@ use actix_web::dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Tr
 use actix_web::{Error, HttpMessage, HttpResponse};
 use futures::Future;
 
+use crate::configs::envconfig::STATIC_CONFIG;
 use crate::models::claims_model::Claims;
+use crate::models::config_model::Config;
 use actix_web::http::header::{self, HeaderName, HeaderValue};
 use futures::future::{ok, LocalBoxFuture, Ready};
 use jsonwebtoken::{decode, DecodingKey, Validation};
@@ -78,7 +80,8 @@ where
                 );
             }
             let token = parts[0];
-            let secret = std::env::var("SECRET_KEY").expect("SECRET_KEY must be set");
+            let config: Config = STATIC_CONFIG.read().unwrap().clone(); //智能指针
+            let secret = &config.secret_key;
             // 解码 JWT，获取 Claims
             if let Ok(decoded_token) = decode::<Claims>(
                 token,

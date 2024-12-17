@@ -23,6 +23,7 @@ impl Config {
             .expect("MAX_CONNECTIONS must be a valid u32");
 
         let log_level = env::var("LOG_LEVEL").expect("LOG_LEVEL must be set in .env file");
+        let secret_key = env::var("SECRET_KEY").expect("SECRET_KEY must be set in .env file");
         let redis_url = env::var("REDIS_URL").expect("REDIS_URL must be set in .env file");
 
         let rabbitmq_uri = env::var("RABBITMQ_URI").expect("RABBITMQ_URI must be set in .env file");
@@ -50,6 +51,7 @@ impl Config {
             cors_allowed_origin,
             max_connections,
             log_level,
+            secret_key,
             redis_url,
             rabbitmq_uri,
             rabbitmq_exchange,

@@ -1,4 +1,6 @@
+use crate::configs::envconfig::STATIC_CONFIG;
 use crate::models::claims_model::Claims;
+use crate::models::config_model::Config;
 use actix_service::{Service, Transform};
 use actix_web::body::BoxBody;
 use actix_web::HttpMessage;
@@ -72,7 +74,8 @@ where
             if let Ok(auth_str) = auth_header.to_str() {
                 if auth_str.starts_with("Bearer ") {
                     let token = &auth_str[7..];
-                    let secret = std::env::var("SECRET_KEY").expect("SECRET_KEY must be set");
+                    let config: Config = STATIC_CONFIG.read().unwrap().clone(); //智能指针
+                    let secret = &config.secret_key;
 
                     // 解码 JWT，获取 Claims
                     if let Ok(decoded_token) = decode::<Claims>(
