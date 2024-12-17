@@ -67,38 +67,51 @@ where
     fn call(&self, req: ServiceRequest) -> Self::Future {
         let svc = self.service.clone();
         Box::pin(async move {
-            let authorization = req
-                .headers()
-                .get("authorization")
-                .map(|v| v.to_str())
-                .unwrap_or(Ok(""))
-                .unwrap();
-            let parts: Vec<&str> = authorization.split(' ').collect();
-            if parts.len() != 2 || parts.is_empty() || parts[0].to_lowercase() != "bearer" {
-                return Ok(
-                    req.into_response(HttpResponse::Unauthorized().finish().map_into_right_body())
-                );
+            // 获取请求的路径
+            let path = req.path();
+            // 接口请求以 /api/ 开头
+            let re = Regex::new(r"^/api/.*").unwrap();
+            if !re.is_match(path) {
+                svc.call(req).await.map(ServiceResponse::map_into_left_body)
             }
-            let token = parts[0];
-            let config: Config = STATIC_CONFIG.read().unwrap().clone(); //智能指针
-            let secret = &config.secret_key;
-            // 解码 JWT，获取 Claims
-            if let Ok(decoded_token) = decode::<Claims>(
-                token,
-                &DecodingKey::from_secret(secret.as_ref()),
-                &Validation::default(),
-            ) {
-                let mut flags: HashMap<&str, String> = HashMap::new();
-                flags.insert("user_id", decoded_token.claims.user_id.to_string()); //remove
-                flags.insert("user_role", decoded_token.claims.role.to_string()); //remove
-                req.extensions_mut().insert(flags); // 将 HashMap 插入到扩展字段中
+            // 如果路径是 "/token" 或其他需要跳过认证的路径，直接返回
+            else if path.ends_with("/token") || path.contains("/tokenget") {
+                // 直接调用下游服务，跳过 JWT 验证
                 svc.call(req).await.map(ServiceResponse::map_into_left_body)
             } else {
-                // req.extensions_mut().insert("identity");
-                // svc.call(req).await.map(ServiceResponse::map_into_left_body)
-                return Ok(
-                    req.into_response(HttpResponse::Unauthorized().finish().map_into_right_body())
-                );
+                let authorization = req
+                    .headers()
+                    .get("authorization")
+                    .map(|v| v.to_str())
+                    .unwrap_or(Ok(""))
+                    .unwrap();
+                let parts: Vec<&str> = authorization.split(' ').collect();
+                if parts.len() != 2 || parts.is_empty() || parts[0].to_lowercase() != "bearer" {
+                    return Ok(req.into_response(
+                        HttpResponse::Unauthorized().finish().map_into_right_body(),
+                    ));
+                }
+                let token = parts[0];
+                let config: Config = STATIC_CONFIG.read().unwrap().clone(); //智能指针
+                let secret = &config.secret_key;
+                // 解码 JWT，获取 Claims
+                if let Ok(decoded_token) = decode::<Claims>(
+                    token,
+                    &DecodingKey::from_secret(secret.as_ref()),
+                    &Validation::default(),
+                ) {
+                    let mut flags: HashMap<&str, String> = HashMap::new();
+                    flags.insert("user_id", decoded_token.claims.user_id.to_string()); //remove
+                    flags.insert("user_role", decoded_token.claims.role.to_string()); //remove
+                    req.extensions_mut().insert(flags); // 将 HashMap 插入到扩展字段中
+                    svc.call(req).await.map(ServiceResponse::map_into_left_body)
+                } else {
+                    // req.extensions_mut().insert("identity");
+                    // svc.call(req).await.map(ServiceResponse::map_into_left_body)
+                    return Ok(req.into_response(
+                        HttpResponse::Unauthorized().finish().map_into_right_body(),
+                    ));
+                }
             }
         })
     }
