@@ -98,9 +98,9 @@ where
         // 获取客户端IP地址，如果有代理，则尝试从 X-Forwarded-For 中获取
         let client_ip = get_client_ip(&req);
         let mut key = format!("{}:{}", client_ip, path); // 使用IP+路径作为key
-                                                         // 获取路径的速率限制配置，若无配置则使用默认值
-                                                         // 打印当前路径的速率限制配置
 
+        // 获取路径的速率限制配置，若无配置则使用默认值
+        // 打印当前路径的速率限制配置
         let config: Config = STATIC_CONFIG.read().unwrap().clone(); //智能指针
         if !config.limit_ip {
             key = path.clone();
