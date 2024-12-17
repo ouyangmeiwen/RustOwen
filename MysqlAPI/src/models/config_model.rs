@@ -15,4 +15,5 @@ pub struct Config {
     pub rabbitmq_routing_key_revceived: String,
     pub limit_per_second_default: u64,
     pub time_window_secs_default: u64,
+    pub limit_ip: bool,
 }

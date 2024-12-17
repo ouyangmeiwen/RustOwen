@@ -134,7 +134,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(rate_limit_middleware.clone()) // Inject the middleware into the app
             //.wrap(limit_middleware.clone()) // Inject the middleware into the app
             .wrap(Logger::default())
-            .wrap(Auth {})
+        //.wrap(Auth {})
         //.wrap(JwtMiddleware) // 应用 JWT 中间件
     })
     .bind(("0.0.0.0", port))?

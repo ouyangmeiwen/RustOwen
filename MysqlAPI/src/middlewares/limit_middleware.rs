@@ -97,10 +97,14 @@ where
         let path = req.path().to_string();
         // 获取客户端IP地址，如果有代理，则尝试从 X-Forwarded-For 中获取
         let client_ip = get_client_ip(&req);
-        let key = format!("{}:{}", client_ip, path); // 使用IP+路径作为key
-                                                     // 获取路径的速率限制配置，若无配置则使用默认值
-                                                     // 打印当前路径的速率限制配置
-        println!("key:{}", key);
+        let mut key = format!("{}:{}", client_ip, path); // 使用IP+路径作为key
+                                                         // 获取路径的速率限制配置，若无配置则使用默认值
+                                                         // 打印当前路径的速率限制配置
+
+        let config: Config = STATIC_CONFIG.read().unwrap().clone(); //智能指针
+        if !config.limit_ip {
+            key = path.clone();
+        }
         let (limit_per_second, time_window_secs) = GLOBAL_PATH_LIMITS
             .read()
             .unwrap()
@@ -111,10 +115,9 @@ where
         Box::pin(async move {
             let mut path_hits = path_hits.lock().await; // 使用 `.await` 获取锁
             let now = Instant::now();
-            let (count, last_access_time) = path_hits.entry(path.clone()).or_insert((0, now));
-
+            // let (count, last_access_time) = path_hits.entry(path.clone()).or_insert((0, now));
             // 在path_hits中使用 client_ip + path 作为键 这样就可以根据IP进行限制
-            //let (count, last_access_time) = path_hits.entry(key.clone()).or_insert((0, now));
+            let (count, last_access_time) = path_hits.entry(key.clone()).or_insert((0, now));
 
             // 判断是否超出请求限制
             if last_access_time.elapsed().as_secs() < time_window_secs {
@@ -125,7 +128,7 @@ where
             // 打印当前路径的速率限制配置
             println!(
                 "Path: {},current:{}, Limit: {}/{}s",
-                path, *count, limit_per_second, time_window_secs
+                key, *count, limit_per_second, time_window_secs
             );
             *last_access_time = now;
 

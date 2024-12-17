@@ -93,10 +93,10 @@ where
                     ));
                 }
                 let token = parts[1];
-               // println!("token:{}", token);
+                // println!("token:{}", token);
                 let config: Config = STATIC_CONFIG.read().unwrap().clone(); //智能指针
                 let secret = &config.secret_key;
-               //println!("secret:{}", secret);
+                //println!("secret:{}", secret);
                 let mut flags: HashMap<&str, String> = HashMap::new();
                 // 解码 JWT，获取 Claims
                 if let Ok(decoded_token) = decode::<Claims>(

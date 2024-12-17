@@ -45,6 +45,12 @@ impl Config {
             .expect("TIME_WINDOW_SECS_DEFAULT must be set in .env file")
             .parse()
             .expect("TIME_WINDOW_SECS_DEFAULT must be a valid u64");
+
+        let limit_ip = env::var("LIMIT_IP")
+            .expect("LIMIT_IP must be set in .env file")
+            .parse()
+            .expect("LIMIT_IP must be a valid u64");
+
         Config {
             database_url,
             port,
@@ -60,6 +66,7 @@ impl Config {
             rabbitmq_routing_key_revceived,
             limit_per_second_default,
             time_window_secs_default,
+            limit_ip,
         }
     }
 }
