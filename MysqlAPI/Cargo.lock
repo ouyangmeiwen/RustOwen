@@ -2756,6 +2756,7 @@ dependencies = [
  "chrono",
  "deadpool-redis",
  "dotenv",
+ "encoding_rs",
  "env_logger",
  "futures",
  "futures-util",

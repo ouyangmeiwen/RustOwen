@@ -1,3 +1,4 @@
+use encoding_rs::*;
 use std::fs;
 use std::fs::File;
 use std::io::{self, Read};
@@ -75,5 +76,35 @@ impl FileUtils {
         let mut contents = String::new();
         file.read_to_string(&mut contents)?;
         Ok(contents)
+    }
+    /// 读取文件并根据指定编码进行解码
+    pub fn read_file_with_encoding(path: &str, encoding: &str) -> io::Result<String> {
+        // 读取文件内容到字节数组
+        let mut file = File::open(path)?;
+        let mut contents = Vec::new();
+        file.read_to_end(&mut contents)?;
+
+        // 根据编码名称选择相应的解码器
+        let encoding = match encoding.to_lowercase().as_str() {
+            "utf-8" => UTF_8,
+            "utf-16be" => UTF_16BE,
+            "utf-16le" => UTF_16LE,
+            "iso-8859-1" => WINDOWS_1252, // ISO-8859-1 和 Windows-1252 是兼容的
+            "windows-1252" => WINDOWS_1252,
+            "gbk" => GBK,
+            "shift-jis" => SHIFT_JIS,
+            "euc-kr" => EUC_KR,
+            // 添加更多编码
+            _ => {
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidInput,
+                    "Unsupported encoding",
+                ))
+            }
+        };
+
+        // 解码字节数据
+        let (decoded, _, _) = encoding.decode(&contents);
+        Ok(decoded.to_string())
     }
 }
