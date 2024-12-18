@@ -2,7 +2,7 @@ use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
-#[derive(Debug, FromRow, Deserialize, Serialize, Default)]
+#[derive(Debug, FromRow, Deserialize, Serialize, Default, Clone)]
 #[allow(non_snake_case)]
 #[serde(rename_all = "PascalCase")] // 如果希望遵循数据库字段的命名方式
 pub struct LibItemModel {

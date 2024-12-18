@@ -16,6 +16,7 @@ use chrono::format::Item;
 use chrono::prelude::*;
 use futures::future::ok;
 use serde_json::json;
+use sqlx::mysql::MySqlPool;
 use std::error::Error;
 use std::f32::consts::E;
 use std::path;
@@ -477,12 +478,13 @@ pub async fn import_libitem_handler(
         }
     }
     println!("导入参数{:?}", body);
+    let is_batch = false;
     if FileUtils::exists(&body.Path) {
         match open_workbook_auto(&body.Path) {
             Ok(mut workbook) => {
                 let start = Instant::now();
                 if let Some(Ok(range)) = workbook.worksheet_range(&body.Sheet) {
-                    //let mut items: Vec<LibItemModel> = Vec::new();
+                    let mut items: Vec<LibItemModel> = Vec::new();
                     for (row_index, row) in range.rows().enumerate() {
                         println!("row:{} work", row_index + 1);
                         let mut item: LibItemModel = LibItemModel {
@@ -582,16 +584,40 @@ pub async fn import_libitem_handler(
                                 _ => {}
                             }
                         }
-                        //items.push(item);
-                        //改成单条执行
-                        match insert_libitem(&data, &item).await {
-                            Ok(_) => {
-                                println!("insert {} success", item.Barcode);
-                            }
-                            Err(_) => {
-                                println!("insert {} error", item.Barcode);
+                        if is_batch {
+                            items.push(item);
+                        } else {
+                            match insert_libitem(&data, &item).await {
+                                Ok(_) => {
+                                    println!("insert {} success", item.Barcode);
+                                }
+                                Err(_) => {
+                                    println!("insert {} error", item.Barcode);
+                                }
                             }
                         }
+                        if items.len() == 1000 {
+                            match insert_libitems(&data, &items).await {
+                                Ok(()) => {
+                                    println!("insert {} success", "batch");
+                                }
+                                Err(e) => {
+                                    println!("insert {} error", e);
+                                }
+                            }
+                            items.clear();
+                        }
+                    }
+                    if items.len() > 0 {
+                        match insert_libitems(&data, &items).await {
+                            Ok(()) => {
+                                println!("insert {} success", "batch");
+                            }
+                            Err(e) => {
+                                println!("insert {} error", "batch");
+                            }
+                        }
+                        items.clear();
                     }
                     let duration = start.elapsed();
                     println!("Time taken: {} seconds", duration.as_secs());
@@ -669,4 +695,70 @@ async fn insert_libitem(data: &web::Data<AppState>, item: &LibItemModel) -> Resu
             Err(format!("Database insertion failed: {}", e))
         }
     }
+}
+
+async fn insert_libitems(data: &web::Data<AppState>, items: &[LibItemModel]) -> Result<(), String> {
+    // 开始事务
+    let mut tx = data
+        .db
+        .begin()
+        .await
+        .map_err(|e| format!("Failed to start transaction: {}", e))?;
+
+    // 批量插入的查询语句
+    let query = r#"
+        INSERT INTO libitem (
+            Id, CreationTime,IsDeleted, Title, Author, Barcode, IsEnable,CallNo, PreCallNo, CatalogCode, ItemState,
+            PressmarkId, PressmarkName, LocationId, LocationName, BookBarcode, ISBN, PubNo,
+            Publisher, PubDate, Price, Pages, Summary, ItemType, Remark, OriginType, CreateType, TenantId
+        ) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)
+        "#;
+
+    // 执行批量插入，每个 item 是一组参数
+    for item in items.iter() {
+        let query_result = sqlx::query(query)
+            .bind(&item.Id)
+            .bind(item.CreationTime.as_ref()) // NaiveDateTime 可以为 NULL
+            .bind(item.IsDeleted) // u8
+            .bind(&item.Title)
+            .bind(item.Author.as_ref()) // Option<String> 可以为 NULL
+            .bind(&item.Barcode)
+            .bind(item.IsEnable) // u8
+            .bind(item.CallNo.as_ref()) // Option<String> 可以为 NULL
+            .bind(item.PreCallNo.as_ref()) // Option<String> 可以为 NULL
+            .bind(item.CatalogCode.as_ref()) // Option<String> 可以为 NULL
+            .bind(item.ItemState) // u8
+            .bind(item.PressmarkId.as_ref()) // Option<String> 可以为 NULL
+            .bind(item.PressmarkName.as_ref()) // Option<String> 可以为 NULL
+            .bind(item.LocationId.as_ref()) // Option<String> 可以为 NULL
+            .bind(item.LocationName.as_ref()) // Option<String> 可以为 NULL
+            .bind(item.BookBarcode.as_ref()) // Option<String> 可以为 NULL
+            .bind(item.ISBN.as_ref()) // Option<String> 可以为 NULL
+            .bind(item.PubNo.as_ref()) // Option<i16>
+            .bind(item.Publisher.as_ref()) // Option<String> 可以为 NULL
+            .bind(item.PubDate.as_ref()) // Option<String> 可以为 NULL
+            .bind(item.Price.as_ref()) // Option<String> 可以为 NULL
+            .bind(item.Pages.as_ref()) // Option<String> 可以为 NULL
+            .bind(item.Summary.as_ref()) // Option<String> 可以为 NULL
+            .bind(item.ItemType) // u8
+            .bind(item.Remark.as_ref()) // Option<String> 可以为 NULL
+            .bind(item.OriginType) // u8
+            .bind(item.CreateType) // u8
+            .bind(item.TenantId) // i32
+            .execute(&mut tx)
+            .await;
+        // 处理每次插入的结果
+        if let Err(e) = query_result {
+            tx.rollback()
+                .await
+                .map_err(|e| format!("Failed to rollback transaction: {}", e))?;
+            return Err(format!("Database batch insertion failed: {}", e));
+        }
+    }
+
+    // 提交事务
+    tx.commit()
+        .await
+        .map_err(|e| format!("Failed to commit transaction: {}", e))?;
+    Ok(()) // 成功插入
 }
