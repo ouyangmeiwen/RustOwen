@@ -1,7 +1,7 @@
 use std::fs;
-use std::io;
+use std::fs::File;
+use std::io::{self, Read};
 use std::path::{Path, PathBuf};
-
 /// FileUtils: A utility struct for common file operations
 pub struct FileUtils;
 
@@ -68,5 +68,12 @@ impl FileUtils {
     /// Get the absolute path of a file
     pub fn absolute_path(path: &str) -> io::Result<PathBuf> {
         fs::canonicalize(path)
+    }
+    /// Read the entire contents of a file into a String
+    pub fn read_file(path: &str) -> io::Result<String> {
+        let mut file = File::open(path)?;
+        let mut contents = String::new();
+        file.read_to_string(&mut contents)?;
+        Ok(contents)
     }
 }
