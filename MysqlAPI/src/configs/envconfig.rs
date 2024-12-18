@@ -1,9 +1,22 @@
 use crate::models::config_model::Config;
 use dotenv::dotenv;
 use lazy_static::lazy_static;
+use serde_yaml;
 use std::env;
-use std::sync::RwLock;
+use std::fs;
+use std::string::String;
+use std::sync::RwLock; // Ensure to add serde_yaml as a dependency in Cargo.toml
 impl Config {
+    pub fn new_yarm() -> Config {
+        // Read the file contents as raw bytes (Vec<u8>)
+        let contents: Vec<u8> = fs::read("config.yaml").expect("Failed to read file");
+        // Convert the bytes into a UTF-8 string
+        let string_contents =
+            String::from_utf8(contents).expect("Failed to convert bytes to string");
+        // Parse the string contents (YAML) into a Config struct
+        let config: Config = serde_yaml::from_str(&string_contents).expect("Failed to parse YAML");
+        config
+    }
     pub fn new() -> Config {
         dotenv().ok(); // 加载 .env 文件
 

@@ -1,0 +1,15 @@
+database_url: "mysql://root:abc@123@localhost:3306/invengodbv41"
+port: 7788
+cors_allowed_origin: "http://127.0.0.1:3000"
+max_connections: 10
+log_level: "actix_web=info"
+secret_key: "123123123123"
+redis_url: "redis://127.0.0.1:6379/"
+rabbitmq_uri: "amqp://guest:guest@localhost:5672/owenhost"
+rabbitmq_exchange: "exchange_topic"
+rabbitmq_queue: "queue_task"
+rabbitmq_routing_key_send: "routing_key.key.task.sendmsg"
+rabbitmq_routing_key_received: "routing_key.key.task.*"
+limit_per_second_default: 50
+time_window_secs_default: 10
+limit_ip: false

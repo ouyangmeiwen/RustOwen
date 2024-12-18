@@ -1,5 +1,5 @@
-/// 应用程序配置结构体
-#[derive(Clone)]
+use serde::{Deserialize, Serialize};
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Config {
     /// 数据库连接 URL
     pub database_url: String,
