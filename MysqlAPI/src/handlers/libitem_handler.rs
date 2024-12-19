@@ -15,6 +15,7 @@ use calamine::{open_workbook_auto, DataType, Reader};
 use chrono::format::Item;
 use chrono::prelude::*;
 use futures::future::ok;
+use futures::TryFutureExt;
 use serde_json::json;
 use sqlx::mysql::MySqlPool;
 use std::error::Error;
@@ -142,6 +143,14 @@ async fn create_libitem_handler(
             println!("user_role:{}", &user_role);
         }
     }
+    let mut transaction = data
+        .db
+        .begin()
+        .await
+        .map_err(|e| {
+            HttpResponse::InternalServerError().json(ApiResponse::<()>::error(&e.to_string()))
+        })
+        .unwrap();
     let new_id = Uuid::new_v4().to_string().replace("-", ""); // 去掉破折号
     let empty_string = "".to_string(); // 提前创建一个 String
     let now: NaiveDateTime = NaiveDateTimeUtils::now_local();
@@ -182,22 +191,68 @@ async fn create_libitem_handler(
         body.CreateType,                             // CreateType
         body.TenantId                                // TenantId
     )
-    .execute(&data.db)
+    // .execute(&data.db)
+    .execute(&mut transaction)
     .await;
+    // match query_result {
+    //     Ok(_) => {
+    //         let libitem =
+    //             sqlx::query_as!(LibItemModel, "SELECT * FROM libitem WHERE id = ?", new_id)
+    //                 .fetch_one(&data.db)
+    //                 .await;
+
+    //         match libitem {
+    //             Ok(libitem) => HttpResponse::Ok().json(ApiResponse::success(libitem)),
+    //             Err(e) => HttpResponse::InternalServerError()
+    //                 .json(ApiResponse::<()>::error(&e.to_string())),
+    //         }
+    //     }
+    //     Err(e) => {
+    //         HttpResponse::InternalServerError().json(ApiResponse::<()>::error(&e.to_string()))
+    //     }
+    // }
     match query_result {
         Ok(_) => {
             let libitem =
                 sqlx::query_as!(LibItemModel, "SELECT * FROM libitem WHERE id = ?", new_id)
-                    .fetch_one(&data.db)
+                    .fetch_one(&mut transaction)
                     .await;
 
             match libitem {
-                Ok(libitem) => HttpResponse::Ok().json(ApiResponse::success(libitem)),
-                Err(e) => HttpResponse::InternalServerError()
-                    .json(ApiResponse::<()>::error(&e.to_string())),
+                Ok(libitem) => {
+                    transaction
+                        .commit()
+                        .await
+                        .map_err(|e| {
+                            HttpResponse::InternalServerError()
+                                .json(ApiResponse::<()>::error(&e.to_string()))
+                        })
+                        .unwrap();
+                    HttpResponse::Ok().json(ApiResponse::success(libitem))
+                }
+                Err(e) => {
+                    transaction
+                        .rollback()
+                        .await
+                        .map_err(|rollback_err| {
+                            HttpResponse::InternalServerError()
+                                .json(ApiResponse::<()>::error(&rollback_err.to_string()))
+                        })
+                        .unwrap();
+                    HttpResponse::InternalServerError()
+                        .json(ApiResponse::<()>::error(&e.to_string()))
+                }
             }
         }
         Err(e) => {
+            transaction
+                .rollback()
+                .await
+                .map_err(|rollback_err| {
+                    HttpResponse::InternalServerError()
+                        .json(ApiResponse::<()>::error(&rollback_err.to_string()))
+                })
+                .unwrap();
             HttpResponse::InternalServerError().json(ApiResponse::<()>::error(&e.to_string()))
         }
     }
@@ -314,6 +369,14 @@ async fn edit_libitem_handler(
             libitem_id
         )));
     }
+    let mut transaction = data
+        .db
+        .begin()
+        .await
+        .map_err(|e| {
+            HttpResponse::InternalServerError().json(ApiResponse::<()>::error(&e.to_string()))
+        })
+        .unwrap();
 
     let libitem = query_result.unwrap();
     let now = NaiveDateTimeUtils::now_local();
@@ -392,31 +455,61 @@ async fn edit_libitem_handler(
         body.TenantId.unwrap_or(libitem.TenantId),
         libitem_id // 使用正确的 ID 参数
     )
-    .execute(&data.db)
+    // .execute(&data.db)
+    .execute(&mut transaction)
+    .await;
+    if let Err(e) = query_result {
+        transaction.rollback().await.ok(); // 回滚事务
+        return HttpResponse::InternalServerError().json(ApiResponse::<()>::error(&e.to_string()));
+    }
+
+    let updated_libitem = sqlx::query_as!(
+        LibItemModel,
+        "SELECT * FROM libitem WHERE id = ?",
+        libitem_id
+    )
+    .fetch_one(&mut transaction)
     .await;
 
-    match query_result {
-        Ok(_) => {
-            let updated_libitem = sqlx::query_as!(
-                LibItemModel,
-                "SELECT * FROM libitem WHERE id = ?",
-                libitem_id
-            )
-            .fetch_one(&data.db)
-            .await;
-
-            match updated_libitem {
-                Ok(updated_libitem) => {
-                    HttpResponse::Ok().json(ApiResponse::success(updated_libitem))
-                }
-                Err(e) => HttpResponse::InternalServerError()
-                    .json(ApiResponse::<()>::error(&e.to_string())),
-            }
+    match updated_libitem {
+        Ok(updated_libitem) => {
+            transaction
+                .commit()
+                .await
+                .map_err(|e| {
+                    HttpResponse::InternalServerError()
+                        .json(ApiResponse::<()>::error(&e.to_string()))
+                })
+                .unwrap();
+            HttpResponse::Ok().json(ApiResponse::success(updated_libitem))
         }
         Err(e) => {
+            transaction.rollback().await.ok(); // 回滚事务
             HttpResponse::InternalServerError().json(ApiResponse::<()>::error(&e.to_string()))
         }
     }
+    // match query_result {
+    //     Ok(_) => {
+    //         let updated_libitem = sqlx::query_as!(
+    //             LibItemModel,
+    //             "SELECT * FROM libitem WHERE id = ?",
+    //             libitem_id
+    //         )
+    //         .fetch_one(&data.db)
+    //         .await;
+
+    //         match updated_libitem {
+    //             Ok(updated_libitem) => {
+    //                 HttpResponse::Ok().json(ApiResponse::success(updated_libitem))
+    //             }
+    //             Err(e) => HttpResponse::InternalServerError()
+    //                 .json(ApiResponse::<()>::error(&e.to_string())),
+    //         }
+    //     }
+    //     Err(e) => {
+    //         HttpResponse::InternalServerError().json(ApiResponse::<()>::error(&e.to_string()))
+    //     }
+    // }
 }
 
 // Delete libitem
@@ -441,18 +534,57 @@ async fn delete_libitem_handler(
         }
     }
     let libitem_id = path.into_inner();
-    let rows_affected = sqlx::query!("DELETE FROM libitem WHERE id = ?", libitem_id)
-        .execute(&data.db)
+
+    // let rows_affected = sqlx::query!("DELETE FROM libitem WHERE id = ?", libitem_id)
+    //     .execute(&data.db)
+    //     .await
+    //     .unwrap()
+    //     .rows_affected();
+
+    // if rows_affected == 0 {
+    //     return HttpResponse::NotFound().json(ApiResponse::<()>::error(&format!(
+    //         "LibItem with ID: {} not found",
+    //         libitem_id
+    //     )));
+    // }
+
+    let mut transaction = data
+        .db
+        .begin()
         .await
-        .unwrap()
-        .rows_affected();
+        .map_err(|e| {
+            HttpResponse::InternalServerError().json(ApiResponse::<()>::error(&e.to_string()))
+        })
+        .unwrap();
+
+    let rows_affected = match sqlx::query!("DELETE FROM libitem WHERE id = ?", libitem_id)
+        .execute(&mut transaction) // 使用事务连接
+        .await
+    {
+        Ok(result) => result.rows_affected(),
+        Err(e) => {
+            transaction.rollback().await.ok(); // 回滚事务
+            return HttpResponse::InternalServerError()
+                .json(ApiResponse::<()>::error(&e.to_string()));
+        }
+    };
 
     if rows_affected == 0 {
+        transaction.rollback().await.ok(); // 回滚事务
         return HttpResponse::NotFound().json(ApiResponse::<()>::error(&format!(
             "LibItem with ID: {} not found",
             libitem_id
         )));
     }
+
+    transaction
+        .commit()
+        .await
+        .map_err(|e| {
+            HttpResponse::InternalServerError().json(ApiResponse::<()>::error(&e.to_string()))
+        })
+        .unwrap();
+
     //HttpResponse::NoContent().finish()
     HttpResponse::Ok().json(ApiResponse::<()>::success_without_data())
 }
