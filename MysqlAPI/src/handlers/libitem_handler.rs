@@ -852,7 +852,7 @@ async fn insert_libitem(data: &web::Data<AppState>, item: &LibItemModel) -> Resu
 
 async fn insert_libitems(data: &web::Data<AppState>, items: &[LibItemModel]) -> Result<(), String> {
     // 开始事务
-    let mut tx = data
+    let mut transaction = data
         .db
         .begin()
         .await
@@ -898,11 +898,12 @@ async fn insert_libitems(data: &web::Data<AppState>, items: &[LibItemModel]) -> 
             .bind(item.OriginType) // u8
             .bind(item.CreateType) // u8
             .bind(item.TenantId) // i32
-            .execute(&mut tx)
+            .execute(&mut transaction)
             .await;
         // 处理每次插入的结果
         if let Err(e) = query_result {
-            tx.rollback()
+            transaction
+                .rollback()
                 .await
                 .map_err(|e| format!("Failed to rollback transaction: {}", e))?;
             return Err(format!("Database batch insertion failed: {}", e));
@@ -910,7 +911,8 @@ async fn insert_libitems(data: &web::Data<AppState>, items: &[LibItemModel]) -> 
     }
 
     // 提交事务
-    tx.commit()
+    transaction
+        .commit()
         .await
         .map_err(|e| format!("Failed to commit transaction: {}", e))?;
     Ok(()) // 成功插入
