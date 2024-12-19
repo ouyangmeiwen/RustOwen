@@ -327,16 +327,44 @@ async fn get_item_bybarcode_handle(
         }
     }
     let barcode = path.into_inner();
+
+    let mut transaction = data
+        .db
+        .begin()
+        .await
+        .map_err(|e| {
+            HttpResponse::InternalServerError().json(ApiResponse::<()>::error(&e.to_string()))
+        })
+        .unwrap();
+
     let item_query = sqlx::query_as!(
         LibItemModel,
         "select * from libitem where barcode=?",
         barcode
     )
-    .fetch_all(&data.db)
+    //.fetch_all(&data.db)
+    .fetch_all(&mut transaction)
     .await;
+    // match item_query {
+    //     Ok(libitems) => HttpResponse::Ok().json(ApiResponse::success(libitems)),
+    //     Err(e) => HttpResponse::InternalServerError().json(ApiResponse::<()>::error("")),
+    // }
     match item_query {
-        Ok(libitems) => HttpResponse::Ok().json(ApiResponse::success(libitems)),
-        Err(e) => HttpResponse::InternalServerError().json(ApiResponse::<()>::error("")),
+        Ok(libitems) => {
+            transaction
+                .commit()
+                .await
+                .map_err(|e| {
+                    HttpResponse::InternalServerError()
+                        .json(ApiResponse::<()>::error(&e.to_string()))
+                })
+                .unwrap();
+            HttpResponse::Ok().json(ApiResponse::success(libitems))
+        }
+        Err(e) => {
+            transaction.rollback().await.ok(); // 回滚事务
+            HttpResponse::InternalServerError().json(ApiResponse::<()>::error(&e.to_string()))
+        }
     }
 }
 
