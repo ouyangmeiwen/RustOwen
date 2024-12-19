@@ -157,39 +157,48 @@ async fn create_libitem_handler(
     let query_result = sqlx::query!(
         r#"
         INSERT INTO libitem (
-            Id, CreationTime,IsDeleted, Title, Author, Barcode, IsEnable,CallNo, PreCallNo, CatalogCode, ItemState,
-            PressmarkId, PressmarkName, LocationId, LocationName, BookBarcode, ISBN, PubNo,
-            Publisher, PubDate, Price, Pages, Summary, ItemType, Remark, OriginType, CreateType, TenantId
-        ) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)
+            Id,          CreationTime,  IsDeleted,     Title,      Author, 
+            Barcode,     IsEnable,      CallNo,        PreCallNo,  CatalogCode, 
+            ItemState,   PressmarkId,   PressmarkName, LocationId, LocationName, 
+            BookBarcode, ISBN,          PubNo,         Publisher,  PubDate, 
+            Price,       Pages,         Summary,       ItemType,   Remark, 
+            OriginType,  CreateType,    TenantId
+        ) VALUES (
+            ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?, 
+            ?, ?, ?)
         "#,
-        new_id,                                      // Id
-        now,                                         //CreationTime
-        (false) as i8,                               // IsDeleted
-        body.Title.to_string(),                      // Title
-        body.Author.as_ref().unwrap_or(&empty_string),// Author
-        body.Barcode.to_string(),                    // Barcode
-        (true) as i8,                               // IsEnable
-        body.CallNo.as_ref().unwrap_or(&empty_string), // CallNo
-        body.PreCallNo.as_ref().unwrap_or(&empty_string),// PreCallNo
-        body.CatalogCode.as_ref().unwrap_or(&empty_string),// CatalogCode
-        body.ItemState,                              // ItemState
-        body.PressmarkId.as_ref().unwrap_or(&empty_string), // PressmarkId
+        new_id,                                               // Id
+        now,                                                  //CreationTime
+        (false) as i8,                                        // IsDeleted
+        body.Title.to_string(),                               // Title
+        body.Author.as_ref().unwrap_or(&empty_string),        // Author
+        body.Barcode.to_string(),                             // Barcode
+        (true) as i8,                                         // IsEnable
+        body.CallNo.as_ref().unwrap_or(&empty_string),        // CallNo
+        body.PreCallNo.as_ref().unwrap_or(&empty_string),     // PreCallNo
+        body.CatalogCode.as_ref().unwrap_or(&empty_string),   // CatalogCode
+        body.ItemState,                                       // ItemState
+        body.PressmarkId.as_ref().unwrap_or(&empty_string),   // PressmarkId
         body.PressmarkName.as_ref().unwrap_or(&empty_string), // PressmarkName
-        body.LocationId.as_ref().unwrap_or(&empty_string), // LocationId
-        body.LocationName.as_ref().unwrap_or(&empty_string), // LocationName
-        body.BookBarcode.as_ref().unwrap_or(&empty_string), // BookBarcode
-        body.ISBN.as_ref().unwrap_or(&empty_string), // ISBN
-        body.PubNo.unwrap_or_default(),              // PubNo
-        body.Publisher.as_ref().unwrap_or(&empty_string), // Publisher
-        body.PubDate.as_ref().unwrap_or(&empty_string), // PubDate
-        body.Price.as_ref().unwrap_or(&empty_string), // Price
-        body.Pages.as_ref().unwrap_or(&empty_string), // Pages
-        body.Summary.as_ref().unwrap_or(&empty_string), // Summary
-        body.ItemType,                               // ItemType
-        body.Remark.as_ref().unwrap_or(&empty_string), // Remark
-        body.OriginType,                             // OriginType
-        body.CreateType,                             // CreateType
-        body.TenantId                                // TenantId
+        body.LocationId.as_ref().unwrap_or(&empty_string),    // LocationId
+        body.LocationName.as_ref().unwrap_or(&empty_string),  // LocationName
+        body.BookBarcode.as_ref().unwrap_or(&empty_string),   // BookBarcode
+        body.ISBN.as_ref().unwrap_or(&empty_string),          // ISBN
+        body.PubNo.unwrap_or_default(),                       // PubNo
+        body.Publisher.as_ref().unwrap_or(&empty_string),     // Publisher
+        body.PubDate.as_ref().unwrap_or(&empty_string),       // PubDate
+        body.Price.as_ref().unwrap_or(&empty_string),         // Price
+        body.Pages.as_ref().unwrap_or(&empty_string),         // Pages
+        body.Summary.as_ref().unwrap_or(&empty_string),       // Summary
+        body.ItemType,                                        // ItemType
+        body.Remark.as_ref().unwrap_or(&empty_string),        // Remark
+        body.OriginType,                                      // OriginType
+        body.CreateType,                                      // CreateType
+        body.TenantId                                         // TenantId
     )
     // .execute(&data.db)
     .execute(&mut transaction)
@@ -379,7 +388,7 @@ async fn edit_libitem_handler(
         .unwrap();
 
     let libitem = query_result.unwrap();
-    let now = NaiveDateTimeUtils::now_local();
+    let now: NaiveDateTime = NaiveDateTimeUtils::now_local();
     let empty_string = "".to_string(); // 提前创建一个 String
     let query_result = sqlx::query!(
         r#"
@@ -805,39 +814,48 @@ async fn insert_libitem(data: &web::Data<AppState>, item: &LibItemModel) -> Resu
     let query_result = sqlx::query!(
         r#"
         INSERT INTO libitem (
-            Id, CreationTime,IsDeleted, Title, Author, Barcode, IsEnable,CallNo, PreCallNo, CatalogCode, ItemState,
-            PressmarkId, PressmarkName, LocationId, LocationName, BookBarcode, ISBN, PubNo,
-            Publisher, PubDate, Price, Pages, Summary, ItemType, Remark, OriginType, CreateType, TenantId
-        ) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)
+            Id,          CreationTime,  IsDeleted,     Title,      Author, 
+            Barcode,     IsEnable,      CallNo,        PreCallNo,  CatalogCode, 
+            ItemState,   PressmarkId,   PressmarkName, LocationId, LocationName, 
+            BookBarcode, ISBN,          PubNo,         Publisher,  PubDate, 
+            Price,       Pages,         Summary,       ItemType,   Remark, 
+            OriginType,  CreateType,    TenantId
+        ) VALUES (
+            ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?, 
+            ?, ?, ?)
         "#,
-        item.Id, // Id
-        item.CreationTime, //CreationTime
-        item.IsDeleted, // IsDeleted
-        item.Title,     // Title
-        item.Author,     // Author
-        item.Barcode,    // Barcode
-        item.IsEnable, // IsDeleted
-        item.CallNo,     // CallNo
-        item.PreCallNo,  // PreCallNo
-        item.CatalogCode,// CatalogCode
-        item.ItemState,    // ItemState
-        item.PressmarkId, // PressmarkId
+        item.Id,            // Id
+        item.CreationTime,  //CreationTime
+        item.IsDeleted,     // IsDeleted
+        item.Title,         // Title
+        item.Author,        // Author
+        item.Barcode,       // Barcode
+        item.IsEnable,      // IsDeleted
+        item.CallNo,        // CallNo
+        item.PreCallNo,     // PreCallNo
+        item.CatalogCode,   // CatalogCode
+        item.ItemState,     // ItemState
+        item.PressmarkId,   // PressmarkId
         item.PressmarkName, // PressmarkName
-        item.LocationId, // LocationId
-        item.LocationName, // LocationName
-        item.BookBarcode, // BookBarcode
-        item.ISBN, // ISBN
-        item.PubNo,              // PubNo
-        item.Publisher, // Publisher
-        item.PubDate, // PubDate
-        item.Price, // Price
-        item.Pages, // Pages
-        item.Summary, // Summary
-        item.ItemType, // ItemType
-        item.Remark, // Remark
-        item.OriginType,// OriginType
-        item.CreateType,// CreateType
-        item.TenantId // TenantId
+        item.LocationId,    // LocationId
+        item.LocationName,  // LocationName
+        item.BookBarcode,   // BookBarcode
+        item.ISBN,          // ISBN
+        item.PubNo,         // PubNo
+        item.Publisher,     // Publisher
+        item.PubDate,       // PubDate
+        item.Price,         // Price
+        item.Pages,         // Pages
+        item.Summary,       // Summary
+        item.ItemType,      // ItemType
+        item.Remark,        // Remark
+        item.OriginType,    // OriginType
+        item.CreateType,    // CreateType
+        item.TenantId       // TenantId
     )
     // .execute(&data.db)
     .execute(&mut transaction) // 使用事务连接
@@ -877,12 +895,20 @@ async fn insert_libitems(data: &web::Data<AppState>, items: &[LibItemModel]) -> 
     // 批量插入的查询语句
     let query = r#"
         INSERT INTO libitem (
-            Id, CreationTime,IsDeleted, Title, Author, Barcode, IsEnable,CallNo, PreCallNo, CatalogCode, ItemState,
-            PressmarkId, PressmarkName, LocationId, LocationName, BookBarcode, ISBN, PubNo,
-            Publisher, PubDate, Price, Pages, Summary, ItemType, Remark, OriginType, CreateType, TenantId
-        ) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)
+            Id,          CreationTime,  IsDeleted,     Title,      Author, 
+            Barcode,     IsEnable,      CallNo,        PreCallNo,  CatalogCode, 
+            ItemState,   PressmarkId,   PressmarkName, LocationId, LocationName, 
+            BookBarcode, ISBN,          PubNo,         Publisher,  PubDate, 
+            Price,       Pages,         Summary,       ItemType,   Remark, 
+            OriginType,  CreateType,    TenantId
+        ) VALUES (
+            ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?, 
+            ?, ?, ?)
         "#;
-
     // 执行批量插入，每个 item 是一组参数
     for item in items.iter() {
         let query_result = sqlx::query(query)
