@@ -387,7 +387,11 @@ async fn edit_libitem_handler(
     SET 
         LastModificationTime=?,
         Title = ?, 
+        Author = ?, 
         Barcode = ?, 
+        CallNo = ?, 
+        PreCallNo = ?, 
+        CatalogCode = ?, 
         ItemState = ?, 
         PressmarkId = ?, 
         PressmarkName = ?, 
@@ -410,7 +414,19 @@ async fn edit_libitem_handler(
     "#,
         now,
         body.Title.as_deref().unwrap_or(&libitem.Title), // 使用 as_deref() 转换为 &str
+        body.Author
+            .as_ref()
+            .unwrap_or(&libitem.Author.as_ref().unwrap_or(&empty_string)),
         body.Barcode.as_deref().unwrap_or(&libitem.Barcode),
+        body.CallNo
+            .as_ref()
+            .unwrap_or(&libitem.CallNo.as_ref().unwrap_or(&empty_string)),
+        body.PreCallNo
+            .as_ref()
+            .unwrap_or(&libitem.PreCallNo.as_ref().unwrap_or(&empty_string)),
+        body.CatalogCode
+            .as_ref()
+            .unwrap_or(&libitem.CatalogCode.as_ref().unwrap_or(&empty_string)),
         body.ItemState.unwrap_or(libitem.ItemState) as u8,
         body.PressmarkId
             .as_ref()
