@@ -781,6 +781,11 @@ pub async fn import_libitem_handler(
 }
 
 async fn insert_libitem(data: &web::Data<AppState>, item: &LibItemModel) -> Result<(), String> {
+    let mut transaction = data
+        .db
+        .begin()
+        .await
+        .map_err(|e| format!("Failed to begin transaction: {}", e))?;
     let query_result = sqlx::query!(
         r#"
         INSERT INTO libitem (
@@ -818,12 +823,28 @@ async fn insert_libitem(data: &web::Data<AppState>, item: &LibItemModel) -> Resu
         item.CreateType,// CreateType
         item.TenantId // TenantId
     )
-    .execute(&data.db)
+    // .execute(&data.db)
+    .execute(&mut transaction) // 使用事务连接
     .await;
+    // match query_result {
+    //     Ok(_) => Ok(()), // 返回一个 Result::Ok 表示成功
+    //     Err(e) => {
+    //         // 将错误信息转换为字符串并返回 Result::Err
+    //         Err(format!("Database insertion failed: {}", e))
+    //     }
+    // }
     match query_result {
-        Ok(_) => Ok(()), // 返回一个 Result::Ok 表示成功
+        Ok(_) => {
+            // 提交事务
+            if let Err(commit_error) = transaction.commit().await {
+                Err(format!("Failed to commit transaction: {}", commit_error))
+            } else {
+                Ok(()) // 成功返回
+            }
+        }
         Err(e) => {
-            // 将错误信息转换为字符串并返回 Result::Err
+            // 回滚事务
+            transaction.rollback().await.ok();
             Err(format!("Database insertion failed: {}", e))
         }
     }
