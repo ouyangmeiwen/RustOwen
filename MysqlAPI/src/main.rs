@@ -44,7 +44,7 @@ async fn main() -> std::io::Result<()> {
     let port = config.port;
     let max_connections = config.max_connections;
 
-    let pool = match MySqlPoolOptions::new() // 使用 MySqlPoolOptions
+    let pool: Pool<MySql> = match MySqlPoolOptions::new() // 使用 MySqlPoolOptions
         .max_connections(max_connections)
         .connect(&database_url)
         .await
