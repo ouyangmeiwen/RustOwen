@@ -45,4 +45,6 @@ pub struct Config {
 
     /// 是否启用基于 IP 的访问限制
     pub limit_ip: bool,
+    ///是否启用单点登录
+    pub sso: bool,
 }

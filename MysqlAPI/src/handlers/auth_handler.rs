@@ -34,7 +34,7 @@ pub async fn generate_token_handler(
     match create_jwt(&my_claims) {
         Ok(token) => {
             // 初始化 Redis 客户端
-            let redis_client = &data.redis_client;
+            let redis_client: &crate::models::redisclient_model::RedisClient = &data.redis_client;
             // 确保 `set` 方法返回的是 `Result<(), String>` 类型，否则你需要做额外的错误处理
             redis_client.set(&user_id, &token).await.unwrap_or(());
             redis_client

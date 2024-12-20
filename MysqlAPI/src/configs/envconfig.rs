@@ -49,6 +49,7 @@ impl Config {
             limit_per_second_default: Config::get_env_var("LIMIT_PER_SECOND_DEFAULT", None),
             time_window_secs_default: Config::get_env_var("TIME_WINDOW_SECS_DEFAULT", None),
             limit_ip: Config::get_env_var("LIMIT_IP", None),
+            sso: Config::get_env_var("SSO", None),
         }
     }
 }
