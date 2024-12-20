@@ -3,7 +3,7 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 
 pub struct RedisClient {
-    pub pool: Pool, // 直接使用连接池 这个pool 是线性安全的
+    pub pool: Pool, // 直接使用连接池 这个pool 是线性安全的deadpool_redis 特殊
 }
 
 impl Clone for RedisClient {
