@@ -9,13 +9,11 @@ impl RedisClient {
         let pool = config
             .create_pool(None)
             .map_err(|e| format!("Failed to create Redis pool: {:?}", e))?;
-        Ok(RedisClient {
-            pool: Arc::new(Mutex::new(pool)),
-        })
+        Ok(RedisClient { pool: pool })
     }
     pub async fn get_connection(&self) -> Result<deadpool_redis::Connection, String> {
-        let pool_lock = self.pool.lock().await;
-        let conn = pool_lock
+        let conn = self
+            .pool
             .get()
             .await
             .map_err(|e| format!("Failed to get connection: {:?}", e))?;
