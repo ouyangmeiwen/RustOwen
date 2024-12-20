@@ -6,12 +6,14 @@ use std::sync::Arc;
 use actix_web::body::EitherBody;
 use actix_web::dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform};
 use actix_web::{Error, HttpMessage, HttpResponse};
+use async_std::sync::RwLock;
 use futures::Future;
 
 use crate::configs::envconfig::STATIC_CONFIG;
 use crate::models::apiresponse_model::ApiResponse;
 use crate::models::claims_model::Claims;
 use crate::models::config_model::Config;
+use crate::models::redisclient_model::RedisClient;
 use actix_web::http::header::{self, HeaderName, HeaderValue};
 use futures::future::{ok, LocalBoxFuture, Ready};
 use jsonwebtoken::{decode, DecodingKey, Validation};
@@ -21,7 +23,9 @@ use std::collections::HashMap;
 use std::env;
 use std::task::{Context, Poll};
 
-pub struct Auth {}
+pub struct Auth {
+    pub redis_client: RedisClient,
+}
 
 impl<S: 'static, B> Transform<S, ServiceRequest> for Auth
 where
@@ -38,12 +42,14 @@ where
     fn new_transform(&self, service: S) -> Self::Future {
         futures::future::ok(AuthMiddleWare {
             service: Rc::new(RefCell::new(service)),
+            redis_client: Arc::new(self.redis_client.clone()),
         })
     }
 }
 
 pub struct AuthMiddleWare<S> {
     service: Rc<RefCell<S>>,
+    redis_client: Arc<RedisClient>, // 直接使用 Arc<RedisClient>
 }
 
 impl<S, B> Service<ServiceRequest> for AuthMiddleWare<S>
@@ -67,6 +73,7 @@ where
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
         let svc = self.service.clone();
+        let redis_client = self.redis_client.clone(); // 克隆 Arc<RwLock<RedisClient>>
         Box::pin(async move {
             // 获取请求的路径
             let path = req.path();
@@ -104,6 +111,28 @@ where
                     &DecodingKey::from_secret(secret.as_ref()),
                     &Validation::default(),
                 ) {
+                    if (config.sso) {
+                        let userid = decoded_token.claims.user_id.to_string();
+                        let redis_result = redis_client.get(&userid).await;
+                        match redis_result {
+                            Ok(value) => {
+                                if (value != token) {
+                                    return Ok(req.into_response(
+                                        HttpResponse::Unauthorized()
+                                            .json(ApiResponse::<()>::error("token invalid"))
+                                            .map_into_right_body(),
+                                    ));
+                                }
+                            }
+                            Err(err) => {
+                                return Ok(req.into_response(
+                                    HttpResponse::Unauthorized()
+                                        .json(ApiResponse::<()>::error("token invalid"))
+                                        .map_into_right_body(),
+                                ));
+                            }
+                        }
+                    }
                     flags.insert("user_id", decoded_token.claims.user_id.to_string()); //remove
 
                     //println!("user_id:{}", decoded_token.claims.user_id.to_string());
