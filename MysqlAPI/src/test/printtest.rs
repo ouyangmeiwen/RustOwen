@@ -19,7 +19,7 @@ pub fn print_all_formats() {
         name: String::from("Alice"),
         age: 30,
     };
-
+    println!(" format!=println!");
     // 基本格式化
     println!("Basic format: {}", integer);
 
