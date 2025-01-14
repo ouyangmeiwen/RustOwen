@@ -1,0 +1,11 @@
+安装rust安装包
+安装vscode插件 Rust (rls) 或 rust-analyzer：提供 Rust 语言支持
+
+
+
+
+cargo build
+cargo build --release
+
+cargo run
+cargo run --release
