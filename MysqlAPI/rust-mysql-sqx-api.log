@@ -1,0 +1,10 @@
+nohup: ignoring input
+Connection to the database is successful!
+start http service:http://127.0.0.1:7788
+start api limit:50/10
+Path: /api/libitems,current:1, Limit: 5/10s
+user_id:
+user_role:
+[2025-01-14T07:28:29Z INFO  actix_web::middleware::logger] 127.0.0.1 "GET /api/libitems HTTP/1.1" 200 7327 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36" 0.251815
+Path: /favicon.ico,current:1, Limit: 50/10s
+[2025-01-14T07:28:29Z INFO  actix_web::middleware::logger] 127.0.0.1 "GET /favicon.ico HTTP/1.1" 404 0 "http://127.0.0.1:7788/api/libitems" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36" 0.000430

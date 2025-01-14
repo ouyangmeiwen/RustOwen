@@ -9,12 +9,13 @@ use std::sync::RwLock;
 
 impl Config {
     // 辅助函数：从环境变量中获取并解析值
-    fn get_env_var<T: std::str::FromStr>(key: &str, default: Option<T>) -> T {
+    fn get_env_var<T: std::str::FromStr>(key: &str, default: T) -> T {
         match env::var(key) {
             Ok(value) => value
                 .parse::<T>()
                 .unwrap_or_else(|_| panic!("Failed to parse {} from environment", key)),
-            Err(_) => default.unwrap_or_else(|| panic!("{} must be set in .env file", key)),
+            // Err(_) => default.unwrap_or_else(|| panic!("{} must be set in .env file", key)),
+            Err(_) => default,
         }
     }
 
@@ -31,25 +32,37 @@ impl Config {
         dotenv().ok(); // 加载 .env 文件
 
         Config {
-            database_url: Config::get_env_var("DATABASE_URL", None),
-            port: Config::get_env_var("PORT", None),
-            cors_allowed_origin: Config::get_env_var("CORS_ALLOWED_ORIGIN", None),
-            max_connections: Config::get_env_var("MAX_CONNECTIONS", None),
-            log_level: Config::get_env_var("LOG_LEVEL", None),
-            secret_key: Config::get_env_var("SECRET_KEY", None),
-            redis_url: Config::get_env_var("REDIS_URL", None),
-            rabbitmq_uri: Config::get_env_var("RABBITMQ_URI", None),
-            rabbitmq_exchange: Config::get_env_var("RABBITMQ_EXCHANGE", None),
-            rabbitmq_queue: Config::get_env_var("RABBITMQ_QUEUE", None),
-            rabbitmq_routing_key_send: Config::get_env_var("RABBITMQ_ROUTING_KEY_SEND", None),
+            database_url: Config::get_env_var(
+                "DATABASE_URL",
+                String::from("mysql://root:abc@123@192.168.1.8:3306/invengodbv41"),
+            ),
+            port: Config::get_env_var("PORT", 7788),
+            cors_allowed_origin: Config::get_env_var(
+                "CORS_ALLOWED_ORIGIN",
+                String::from("http://192.168.1.8:3000"),
+            ),
+            max_connections: Config::get_env_var("MAX_CONNECTIONS", 10),
+            log_level: Config::get_env_var("LOG_LEVEL", String::from("actix_web=info")),
+            secret_key: Config::get_env_var("SECRET_KEY", String::from("123123123123")),
+            redis_url: Config::get_env_var("REDIS_URL", String::from("redis://192.168.1.8:6379/")),
+            rabbitmq_uri: Config::get_env_var("RABBITMQ_URI", String::new()), // 如果没有该值，返回空字符串
+            rabbitmq_exchange: Config::get_env_var(
+                "RABBITMQ_EXCHANGE",
+                String::from("exchange_topic"),
+            ),
+            rabbitmq_queue: Config::get_env_var("RABBITMQ_QUEUE", String::from("queue_task")),
+            rabbitmq_routing_key_send: Config::get_env_var(
+                "RABBITMQ_ROUTING_KEY_SEND",
+                String::from("routing_key.key.task.sendmsg"),
+            ),
             rabbitmq_routing_key_revceived: Config::get_env_var(
                 "RABBITMQ_ROUTING_KEY_RECEIVED",
-                None,
+                String::from("routing_key.key.task.*"),
             ),
-            limit_per_second_default: Config::get_env_var("LIMIT_PER_SECOND_DEFAULT", None),
-            time_window_secs_default: Config::get_env_var("TIME_WINDOW_SECS_DEFAULT", None),
-            limit_ip: Config::get_env_var("LIMIT_IP", None),
-            sso: Config::get_env_var("SSO", None),
+            limit_per_second_default: Config::get_env_var("LIMIT_PER_SECOND_DEFAULT", 50),
+            time_window_secs_default: Config::get_env_var("TIME_WINDOW_SECS_DEFAULT", 10),
+            limit_ip: Config::get_env_var("LIMIT_IP", false),
+            sso: Config::get_env_var("SSO", true),
         }
     }
 }

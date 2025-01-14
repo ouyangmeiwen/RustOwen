@@ -1,0 +1,18 @@
+# 使用官方的 slim 镜像作为运行时镜像
+FROM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/ubuntu:22.04
+
+# 安装运行时所需的依赖
+RUN apt-get update && apt-get install -y \
+    libssl3  \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+
+# 创建并设置工作目录
+WORKDIR /usr/src/rust-mysql-sqx-api
+
+# 将本地编译好的二进制文件复制到容器中
+COPY ./target/debug/rust-mysql-sqx-api /usr/local/bin/rust-mysql-sqx-api
+
+# 设置容器的启动命令
+CMD ["rust-mysql-sqx-api"]

@@ -24,17 +24,13 @@ RUN apt-get update && apt-get install -y \
 # 从构建阶段复制已构建的二进制文件
 COPY --from=builder /usr/src/rust-mysql-sqx-api/target/release/rust-mysql-sqx-api /usr/local/bin/rust-mysql-sqx-api
 
-# 复制 .env 文件到容器中
+# 复制 .env 文件到容器中 但是目前发现无法读取env下次再找原因
 COPY --from=builder /usr/src/rust-mysql-sqx-api/.env /usr/local/bin/.env
 
 # 复制 .env 文件到容器中
 COPY --from=builder /usr/src/rust-mysql-sqx-api/config.json /usr/local/bin/config.json
 # 设置权限，确保 .env 文件可读
 RUN chmod 644 /usr/local/bin/.env
-
-RUN ls -l /usr/local/bin/
-
-RUN cat /usr/local/bin/.env
 
 # 设置容器的启动命令
 CMD ["rust-mysql-sqx-api"]

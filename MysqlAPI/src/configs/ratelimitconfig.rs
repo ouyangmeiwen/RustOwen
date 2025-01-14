@@ -15,34 +15,40 @@ struct RateLimitConfig {
 lazy_static! {
     // Use RwLock to allow read-only access after the first initialization
     pub static ref GLOBAL_PATH_LIMITS: RwLock<HashMap<String, (u64, u64)>> = {
-        let path_limits = load_config().unwrap_or_else(|e| {
-            eprintln!("Failed to load config at startup: {:?}", e);
-            HashMap::new() // Default to an empty configuration on error
-        });
+        let path_limits = load_config(); // No longer unwrap, just return default if failed
         RwLock::new(path_limits)
     };
 }
 
 /// Load configuration from a JSON file
-fn load_config() -> Result<HashMap<String, (u64, u64)>, Error> {
-    // Open the configuration file
-    let file = File::open("config.json").map_err(|e| {
-        eprintln!("Error opening config file: {}", e);
-        Error::from(e)
-    })?;
+fn load_config() -> HashMap<String, (u64, u64)> {
+    // Try to open the configuration file
+    let file = File::open("config.json");
 
-    // Parse the JSON into a HashMap<String, RateLimitConfig>
-    let path_limits: HashMap<String, RateLimitConfig> =
-        serde_json::from_reader(file).map_err(|e| {
-            eprintln!("Error reading config file: {}", e);
-            Error::from(e)
-        })?;
-
-    // Convert RateLimitConfig into the desired HashMap format
-    Ok(path_limits
-        .into_iter()
-        .map(|(path, config)| (path, (config.limit_per_second, config.time_window_secs)))
-        .collect())
+    match file {
+        Ok(file) => {
+            // Try to parse the JSON into a HashMap<String, RateLimitConfig>
+            match serde_json::from_reader::<File, HashMap<String, RateLimitConfig>>(file) {
+                Ok(path_limits) => {
+                    // Convert RateLimitConfig into the desired HashMap format
+                    path_limits
+                        .into_iter()
+                        .map(|(path, config)| {
+                            (path, (config.limit_per_second, config.time_window_secs))
+                        })
+                        .collect()
+                }
+                Err(e) => {
+                    eprintln!("Error reading config file: {}", e);
+                    HashMap::new() // Return default empty config on error
+                }
+            }
+        }
+        Err(e) => {
+            eprintln!("Error opening config file: {}", e);
+            HashMap::new() // Return default empty config on error
+        }
+    }
 }
 
 /// Seal the global limits, making them effectively read-only

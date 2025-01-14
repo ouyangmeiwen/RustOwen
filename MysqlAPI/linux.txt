@@ -80,9 +80,13 @@ docker rm -f $(docker ps -aq)
 docker rmi -f $(docker images -q)
 
 docker build -t rust-mysql-sqx-api:latest . -f Dockerfile
+docker build -t rust-mysql-sqx-api:latest . -f DockerfileRelease
 docker run -d -p 7788:7788 --restart=always --name rust-mysql-sqx-api  rust-mysql-sqx-api:latest
 
 //http://127.0.0.1:7788/api/libitems
+
+docker cp .env 4a:/usr/local/bin/.env
+
 
 
 docker save -o ./rust:1.82.0_owen.tar imageid
