@@ -13,6 +13,7 @@ WORKDIR /usr/src/rust-mysql-sqx-api
 
 # 将本地编译好的二进制文件复制到容器中
 COPY ./target/debug/rust-mysql-sqx-api /usr/local/bin/rust-mysql-sqx-api
+#COPY ./target/release/rust-mysql-sqx-api /usr/local/bin/rust-mysql-sqx-api
 
 # 设置容器的启动命令
 CMD ["rust-mysql-sqx-api"]
