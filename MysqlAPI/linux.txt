@@ -8,6 +8,8 @@ rustc --version
 cargo --version
 
 
+
+
 sudo apt update
 sudo apt install build-essential
 
@@ -19,6 +21,8 @@ sudo apt-get install pkg-config
 sudo apt install gdb
 sudo apt-get install lldb-14-dev python3-lldb
 
+cargo update
+cargo check --verbose
 
 构建
 cargo build
@@ -83,7 +87,7 @@ docker build -t rust-mysql-sqx-api:latest . -f Dockerfile
 docker build -t rust-mysql-sqx-api:latest . -f DockerfileRelease
 docker run -d -p 7788:7788 --restart=always --name rust-mysql-sqx-api  rust-mysql-sqx-api:latest
 
-//http://127.0.0.1:7788/api/libitems
+//http://192.168.229.130:7788/api/libitems
 
 docker cp .env 4a:/usr/local/bin/.env
 
