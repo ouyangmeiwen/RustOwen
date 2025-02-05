@@ -1,7 +1,0 @@
-
-每次改动代码调试的时候需要执行下面的生成，然后才能调试
-
-cd my_info_system
-cargo rustc -- -L ./libs -l sqlite3      
-
-2
