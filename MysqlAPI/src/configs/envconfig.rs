@@ -34,17 +34,17 @@ impl Config {
         Config {
             database_url: Config::get_env_var(
                 "DATABASE_URL",
-                String::from("mysql://root:abc@123@192.168.1.8:3306/invengodbv41"),
+                String::from("mysql://root:abc@123@192.168.229.130:3306/invengodbv41"),
             ),
             port: Config::get_env_var("PORT", 7788),
             cors_allowed_origin: Config::get_env_var(
                 "CORS_ALLOWED_ORIGIN",
-                String::from("http://192.168.1.8:3000"),
+                String::from("http://192.168.229.130:3000"),
             ),
             max_connections: Config::get_env_var("MAX_CONNECTIONS", 10),
             log_level: Config::get_env_var("LOG_LEVEL", String::from("actix_web=info")),
             secret_key: Config::get_env_var("SECRET_KEY", String::from("123123123123")),
-            redis_url: Config::get_env_var("REDIS_URL", String::from("redis://192.168.1.8:6379/")),
+            redis_url: Config::get_env_var("REDIS_URL", String::from("redis://:002161@192.168.229.130:6379/")),
             rabbitmq_uri: Config::get_env_var("RABBITMQ_URI", String::new()), // 如果没有该值，返回空字符串
             rabbitmq_exchange: Config::get_env_var(
                 "RABBITMQ_EXCHANGE",

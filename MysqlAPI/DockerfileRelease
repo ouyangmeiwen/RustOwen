@@ -9,11 +9,13 @@ RUN apt-get update && apt-get install -y \
 
 
 # 创建并设置工作目录
-WORKDIR /usr/src/rust-mysql-sqx-api
+WORKDIR /app
 
 # 将本地编译好的二进制文件复制到容器中
 COPY ./target/debug/rust-mysql-sqx-api /usr/local/bin/rust-mysql-sqx-api
 #COPY ./target/release/rust-mysql-sqx-api /usr/local/bin/rust-mysql-sqx-api
 
+COPY ./config.json /usr/local/bin/config.json
+
 # 设置容器的启动命令
-CMD ["rust-mysql-sqx-api"]
+CMD ["/usr/local/bin/rust-mysql-sqx-api"]
