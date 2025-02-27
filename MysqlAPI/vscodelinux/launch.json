@@ -11,7 +11,7 @@
       "environment": [],
       "externalConsole": false,
       "MIMode": "gdb",
-      "miDebuggerServerAddress": "192.168.229.129:1234",  // 远程 gdbserver 地址
+      // "miDebuggerServerAddress": "192.168.229.130:1234",  // 远程 gdbserver 地址
       "setupCommands": [
         {
           "description": "为 gdb 启用整齐打印",
