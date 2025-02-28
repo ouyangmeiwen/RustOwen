@@ -86,6 +86,7 @@ docker rmi -f $(docker images -q)
 docker build -t rust-mysql-sqx-api:latest . -f Dockerfile
 docker build -t rust-mysql-sqx-api:latest . -f DockerfileRelease
 docker run -d -p 7788:7788 --restart=always --name rust-mysql-sqx-api  rust-mysql-sqx-api:latest
+docker run -d -p 7788:7788  --name rust-mysql-sqx-api  rust-mysql-sqx-api:latest
 
 //http://192.168.229.130:7788/api/libitems
 
