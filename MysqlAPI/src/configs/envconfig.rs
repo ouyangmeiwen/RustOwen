@@ -8,26 +8,16 @@ use std::string::String;
 use std::sync::RwLock;
 
 impl Config {
-    // 辅助函数：从环境变量中获取并解析值
-    fn get_env_var<T: std::str::FromStr>(key: &str, default: T) -> T {
-        match env::var(key) {
-            Ok(value) => value
-                .parse::<T>()
-                .unwrap_or_else(|_| panic!("Failed to parse {} from environment", key)),
-            // Err(_) => default.unwrap_or_else(|| panic!("{} must be set in .env file", key)),
-            Err(_) => default,
-        }
-    }
-
-    pub fn new_yarn() -> Config {
-        // 读取 YAML 配置文件并解析
-        let contents = fs::read("config.yaml").expect("Failed to read config.yaml");
-        let string_contents =
-            String::from_utf8(contents).expect("Failed to convert bytes to string");
-        let config: Config = serde_yaml::from_str(&string_contents).expect("Failed to parse YAML");
-        config
-    }
-
+    // // 辅助函数：从环境变量中获取并解析值
+    // fn get_env_var<T: std::str::FromStr>(key: &str, default: T) -> T {
+    //     match env::var(key) {
+    //         Ok(value) => value
+    //             .parse::<T>()
+    //             .unwrap_or_else(|_| panic!("Failed to parse {} from environment", key)),
+    //         // Err(_) => default.unwrap_or_else(|| panic!("{} must be set in .env file", key)),
+    //         Err(_) => default,
+    //     }
+    // }
     pub fn new() -> Config {
         let contents = fs::read("config.yaml").expect("Failed to read config.yaml");
         let string_contents =
