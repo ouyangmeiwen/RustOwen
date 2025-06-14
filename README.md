@@ -1,1 +1,1 @@
-Rust is Faster in My Apps
+本项目使用RUST 写的图书查询接口包含图书的批量导入。
